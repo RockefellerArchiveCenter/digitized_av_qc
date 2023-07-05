@@ -1,0 +1,12 @@
+version: '3'
+
+services:
+  web:
+    build: .
+    entrypoint: python manage.py runserver 0.0.0.0:8080
+    environment:
+      - APPLICATION_PORT=${APPLICATION_PORT:-8080}
+    volumes:
+      - .:/code
+    ports:
+      - "${APPLICATION_PORT:-8080}:${APPLICATION_PORT:-8080}"
