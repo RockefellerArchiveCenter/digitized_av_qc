@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 
 from pathlib import Path
 
+from digitized_av_qc import config
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -37,6 +39,8 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django_cron",
+    "package_review",
 ]
 
 MIDDLEWARE = [
@@ -54,7 +58,7 @@ ROOT_URLCONF = "digitized_av_qc.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [Path('package_review', 'templates')],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -62,6 +66,7 @@ TEMPLATES = [
                 "django.template.context_processors.request",
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
+                "django.template.context_processors.media",
             ],
         },
     },
@@ -73,7 +78,16 @@ WSGI_APPLICATION = "digitized_av_qc.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
-DATABASES = {}
+DATABASES = {
+    "default": {
+        "ENGINE": config.SQL_ENGINE,
+        "NAME": config.SQL_DB_NAME,
+        "USER": config.SQL_DB_USER,
+        "PASSWORD": config.SQL_DB_PASSWORD,
+        "HOST": config.SQL_HOST,
+        "PORT": config.SQL_PORT,
+    }
+}
 
 
 # Password validation
@@ -116,3 +130,33 @@ STATIC_URL = "static/"
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+CRON_CLASSES = [
+    "package_review.cron.DiscoverPackages",
+    "package_review.cron.FetchRightsStatements",
+]
+
+BASE_STORAGE_DIR = BASE_DIR / config.STORAGE_PATH
+BASE_DESTINATION_DIR = BASE_DIR / config.DESTINATION_PATH
+
+MEDIA_ROOT = BASE_STORAGE_DIR
+MEDIA_URL = '/media/'
+
+ARCHIVESSPACE = {
+    'baseurl': config.AS_BASEURL,
+    'repository': config.AS_REPO,
+    'username': config.AS_USERNAME,
+    'password': config.AS_PASSWORD,
+}
+
+AQUILA = {
+    'baseurl': config.AQUILA_BASEURL
+}
+
+AWS = {
+    'access_key_id': config.AWS_ACCESS_KEY_ID,
+    'secret_access_key': config.AWS_SECRET_ACCESS_KEY,
+    'role_arn': config.AWS_ROLE_ARN,
+    'region': config.AWS_REGION,
+    'sns_topic': config.AWS_SNS_TOPIC
+}

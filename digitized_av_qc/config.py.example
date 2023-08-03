@@ -1,0 +1,22 @@
+SQL_ENGINE = "django.db.backends.postgresql" # Django database engine (string)
+SQL_DB_NAME = "postgres" # Database to connect to (string)
+SQL_DB_USER = "postgres" # Name of database user (string)
+SQL_DB_PASSWORD = "postgres" # Password for database user (string)
+SQL_HOST = "db" # Hostname for database (string)
+SQL_PORT = 5432 # Port for database (integer)
+
+STORAGE_PATH = 'storage' # Path to original location of files, relative to BASE_DIR (string)
+DESTINATION_PATH = 'destination' # Path to destination location of files, relative to BASE_DIR (string)
+
+AS_BASEURL = 'https://as.dev.rockarch.org/api' # BaseURL for ArchivesSpace instance (string)
+AS_REPO = '2' # ArchivesSpace repository to use (string)
+AS_USERNAME = 'admin' # ArchivesSpace username (string)
+AS_PASSWORD = 'admin' # ArchivesSpace password (string)
+
+AQUILA_BASEURL = 'https://aquila.dev.rockarch.org' # BaseURL for Aquila instance (string)
+
+AWS_ACCESS_KEY_ID = 'foo' # Access Key ID for AWS user (string)
+AWS_SECRET_ACCESS_KEY = 'bar' # Secret Access Key for AWS user (string)
+AWS_ROLE_ARN = 'digitized-av-role' # Role ARN for role to be assumed by AWS user (string)
+AWS_REGION = 'us-east-1' # AWS region in which infrastructure is located (string)
+AWS_SNS_TOPIC = 'digitized_av_notifications' # ARN for SNS Topic to be posted to (string)
