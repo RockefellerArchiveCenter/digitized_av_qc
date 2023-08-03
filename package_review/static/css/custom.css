@@ -1,0 +1,22 @@
+.modal__overlay {
+    display: none;
+}
+
+.modal__overlay.is-open {
+    display: block;
+}
+
+form {
+    display: inline;
+}
+
+.checkbox--rights {
+    width: auto;
+}
+
+.modal--small {
+    bottom: 30%;
+    left: 30%;
+    right: 30%;
+    top: 30%;
+}
