@@ -14,9 +14,20 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
-from django.contrib import admin
-from django.urls import path
+from django.conf import settings
+from django.conf.urls.static import static
+from django.urls import re_path
+
+from package_review.views import (PackageApproveView, PackageBulkApproveView,
+                                  PackageBulkRejectView, PackageDetailView,
+                                  PackageListView, PackageRejectView)
 
 urlpatterns = [
-    path("admin/", admin.site.urls),
-]
+    # path("admin/", admin.site.urls),
+    re_path(r'^$', PackageListView.as_view(), name='package-list'),
+    re_path(r'^package/(?P<pk>[\d]+)/$', PackageDetailView.as_view(), name='package-detail'),
+    re_path(r'^package/bulk-approve/$', PackageBulkApproveView.as_view(), name='package-bulk-approve'),
+    re_path(r'^package/bulk-reject/$', PackageBulkRejectView.as_view(), name='package-bulk-reject'),
+    re_path(r'^package/approve/', PackageApproveView.as_view(), name='package-approve'),
+    re_path(r'^package/reject/', PackageRejectView.as_view(), name='package-reject'),
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
