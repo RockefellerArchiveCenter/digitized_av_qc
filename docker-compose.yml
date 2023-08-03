@@ -1,12 +1,25 @@
 version: '3'
 
 services:
+  db:
+    image: postgres:14.4
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=postgres
+    volumes:
+      - dbvolume:/var/lib/postgresql/data/
   web:
     build: .
-    entrypoint: python manage.py runserver 0.0.0.0:8080
+    entrypoint: /code/entrypoint.sh
     environment:
       - APPLICATION_PORT=${APPLICATION_PORT:-8080}
     volumes:
       - .:/code
     ports:
       - "${APPLICATION_PORT:-8080}:${APPLICATION_PORT:-8080}"
+    depends_on:
+    - db
+
+volumes:
+  dbvolume:
