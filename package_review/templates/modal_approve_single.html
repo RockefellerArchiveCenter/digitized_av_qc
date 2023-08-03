@@ -1,0 +1,20 @@
+<div id="modal__approve" class="modal__overlay" aria-hidden="true">
+  <div data-micromodal-close>
+    <div tabindex="-1" class="modal modal--small" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal__header">
+        <h2 id="modalTitle" class="modal__header-title">Reject Item</h2>
+        <button class="modal__header-button" aria-label="Close" data-micromodal-close>
+          <span class="material-icon" aria-hidden="true">close</span>
+        </button>
+      </div>
+      <div class="modal__body">
+        <p>Are you sure you have reviewed this item and are ready to approve it?</p>
+        <form id="approve_form" action="{% url 'package-approve' %}?object_list={{object.pk}}&rights_ids=" method="post">
+          {% csrf_token %}
+          <button type="submit" class="btn btn--sm btn--blue">Approve</button>
+        </form>
+        <button type="cancel" class="btn btn--sm btn--orange" data-micromodal-close>Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>

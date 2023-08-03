@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<html>
+  {% include 'head.html' %}
+  <body>
+    <nav>
+      <a href="#main" class="skip-link visually-hidden">Jump directly to main content</a>
+    </nav>
+    {% include 'header.html' %}
+    {% include 'scripts.html' %}
+    <div class="container mb-50">
+        <h1>{% block h1_title %}{% endblock %}</h1>
+        <main id="main">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+    {% include 'footer.html' %}
+    {% block modals %}{% endblock %}
+  </body>
+</html>
+

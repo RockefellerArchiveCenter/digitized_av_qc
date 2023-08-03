@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block h1_title %}
+Complete QC and Assign Rights for Digitized Items
+{% endblock %}
+
+{% block content %}
+{% if object_list|length %}
+<!-- Search -->
+
+<form id="package-list-table" action="{% url 'package-bulk-approve' %}" method="get">
+    <button type="submit" class="btn btn--sm btn--blue btn--list">Assign Rights to Selected Items</button>
+    <button type="submit" formaction="{% url 'package-bulk-reject' %}" class="btn btn--sm btn--orange btn--list">Reject Selected Items</button>
+    <table class="table table__package-list">
+        <thead>
+            <tr>
+                <th>Select</th>
+                <th>AV #</th>
+                <th>Title</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for object in object_list %}
+            <tr>
+                <td>
+                    <input
+                        class="select-package"
+                        type="checkbox"
+                        id="{{object.pk}}"
+                        name="{{object.pk}}"
+                    />
+                </td>
+                <td><a href="{% url 'package-detail' pk=object.pk %}">{{object.av_number}}</a></td>
+                <td>{{object.title}}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</form>
+<!-- Pagination -->
+{% else %}
+<p>No files to QC</p>
+{% endif %}
+{% endblock %}
+
+{% block modals %}{% endblock %}

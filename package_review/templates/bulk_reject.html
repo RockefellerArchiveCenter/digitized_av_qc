@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% load tags %}
+
+{% block h1_title %}
+Reject Items
+{% endblock %}
+
+{% block content %}
+<h2>Selected Items to Reject</h2>
+<ul>
+    {% for object in object_list %}
+    <li>{{object}}</li>
+    {% endfor %}
+</ul>
+<p>Are you sure you want to reject these items?</p>
+<form id="reject_form" action="{% url 'package-reject' %}?object_list={{object_list|id_list}}" method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn--sm btn--blue">Reject Items</button>
+</form>
+<a href="{% url 'package-list' %}" type="cancel" class="btn btn--sm btn--orange">Cancel</a>
+{% endblock %}
+
+{% block modals %}
+{% include 'modal_approve_bulk.html' %}
+{% endblock %}

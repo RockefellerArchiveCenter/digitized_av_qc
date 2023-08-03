@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block h1_title %}
+{{object.av_number}} Details
+{% endblock %}
+
+{% block content %}
+<p>{{object.refid}}</p>
+<p>QC Status: <span class="label">{{object.get_process_status_display}}</span></p>
+<h2>{{object.title}}</h2>
+{% if object.type == '1' %}
+<audio controls>
+    <source src="{{MEDIA_URL}}/{{object.refid}}/{{object.refid}}_a.mp3" type="audio/mpeg">
+    Your browser does not support the audio tag.
+  </audio>
+{% elif object.type == '2' %}
+<video width="320" height="240" controls>
+    <source src="{{MEDIA_URL}}/{{object.refid}}/{{object.refid}}_a.mp4" type="video/mp4">
+    Your browser does not support the video tag.
+</video>
+{% endif %}
+
+<h2>Assign Rights</h2>
+{% for statement in rights_statements %}
+  <div class="input-group">
+    <input
+      type="checkbox"
+      class="checkbox--rights"
+      id={{statement.aquila_id}}
+      name="{{statement.title}}"
+    />
+    <label for={{statement.aquila_id}} class="checkbox--blue">{{statement.title}}</label>
+  </div>
+{% endfor %}
+
+<div id="error-message" class="input__error" style="display:none"></div>
+
+<div class="mt-20">
+  <button id="approve-button" type="submit" class="btn btn--sm btn--blue">Approve Item</button>
+  <button type="cancel" class="btn btn--sm btn--orange" data-micromodal-trigger="modal__reject-single">Reject Item</button>
+</div>
+{% endblock %}
+
+{% block modals %}
+{% include 'modal_approve_single.html' %}
+{% include 'modal_reject_single.html' %}
+{% endblock %}

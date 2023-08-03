@@ -1,0 +1,20 @@
+{% load static %}
+
+<head>
+  <!-- Matomo Tag Manager -->
+   <!-- <script>
+    var _mtm = window._mtm = window._mtm || [];
+    _mtm.push({'mtm.startTime': (new Date().getTime()), 'event': 'mtm.Start'});
+    var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+    g.async=true; g.src='https://cdn.matomo.cloud/rockarch.matomo.cloud/container_SdzKujX7.js'; s.parentNode.insertBefore(g,s);
+   </script> -->
+   <!-- End Matomo Tag Manager -->
+
+     <meta charset="utf-8">
+     <meta http-equiv="X-UA-Compatible" content="IE=edge">
+     <meta name="viewport" content="width=device-width, initial-scale=1">
+   
+     <title>Cue See{% if page_title %} - {{ page_title }}{% elif name %} - {{name}}{% endif %}</title>
+     <link rel="stylesheet" href="https://assets.rockarch.org/v0.5.0/main.min.css">
+     <link rel="stylesheet" href="{% static 'css/custom.css' %}">
+</head>   

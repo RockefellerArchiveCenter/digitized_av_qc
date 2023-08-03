@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block h1_title %}
+Assign Rights and Approve Items
+{% endblock %}
+
+{% block content %}
+<div>
+    <h2>Selected Items to Approve</h2>
+    <ul>
+        {% for object in object_list %}
+        <li>{{object}}</li>
+        {% endfor %}
+    </ul>
+</div>
+<div>
+    <h2>Choose one or more rights statements to apply to items</h2>
+    {% for statement in rights_statements %}
+    <div class="input-group">
+        <input
+        type="checkbox"
+        class="checkbox--rights"
+        id={{statement.aquila_id}}
+        name="{{statement.title}}"
+        />
+        <label for={{statement.aquila_id}} class="checkbox--blue">{{statement.title}}</label>
+    </div>
+    {% endfor %}
+</div>
+
+<div class="mt-20"></div>
+    <button id="approve-button" type="submit" class="btn btn--sm btn--blue">Approve Items</button>
+    <a href="{% url 'package-list' %}" class="btn btn--sm btn--orange">Cancel</a>
+</div>
+{% endblock %}
+
+{% block modals %}
+{% include 'modal_approve_bulk.html' %}
+{% endblock %}
