@@ -1,1 +1,6 @@
+ArchivesSnake~=0.9
+boto3~=1.28
 Django~=4.2
+django4-cron~=0.5
+moto~=4.1
+psycopg2~=2.9
