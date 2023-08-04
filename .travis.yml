@@ -1,3 +1,4 @@
+dist: bionic
 language: python
 python:
   "3.10"
@@ -28,6 +29,24 @@ script:
 
 after_script:
   - docker-compose exec $CONTAINER coverage report --omit=*/migrations/* -m
+
+before_deploy:
+  - pip install awscli
+  - docker build -t ${APPLICATION_NAME} --target build .
+  - if [ ! -d deploy_scripts ]; then git clone https://github.com/RockefellerArchiveCenter/deploy_scripts.git; fi
+deploy:
+  - provider: script
+    script: >-
+      bash deploy_scripts/containers/push_image_to_ecr.sh $APPLICATION_NAME &&
+      bash deploy_scripts/upload_file_to_s3.sh ${APPLICATION_NAME}_template.yaml rac-dev-cloudformation-apps
+    on:
+      branch: development
+  - provider: script
+    script: >-
+      bash deploy_scripts/containers/add_tag_to_image.sh $APPLICATION_NAME dev prod &&
+      bash deploy_scripts/upload_file_to_s3.sh ${APPLICATION_NAME}_template.yaml rac-prod-cloudformation-apps
+    on:
+      branch: base
 
 notifications:
   email: false

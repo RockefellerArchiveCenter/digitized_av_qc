@@ -17,6 +17,6 @@ AQUILA_BASEURL = 'https://aquila.dev.rockarch.org' # BaseURL for Aquila instance
 
 AWS_ACCESS_KEY_ID = 'foo' # Access Key ID for AWS user (string)
 AWS_SECRET_ACCESS_KEY = 'bar' # Secret Access Key for AWS user (string)
-AWS_ROLE_ARN = 'digitized-av-role' # Role ARN for role to be assumed by AWS user (string)
+AWS_ROLE_ARN = 'arn:aws:iam::123456789012:role/digitized-av-role' # Role ARN for role to be assumed by AWS user (string)
 AWS_REGION = 'us-east-1' # AWS region in which infrastructure is located (string)
 AWS_SNS_TOPIC = 'digitized_av_notifications' # ARN for SNS Topic to be posted to (string)

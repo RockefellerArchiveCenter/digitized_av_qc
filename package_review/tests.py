@@ -80,7 +80,6 @@ class AWSClientTests(TestCase):
     @mock_sqs
     @mock_sts
     def test_deliver_message(self):
-        # TODO
         sns = boto3.client('sns', region_name='us-east-1')
         topic_arn = sns.create_topic(Name='my-topic')['TopicArn']
         sqs_conn = boto3.resource("sqs", region_name="us-east-1")
