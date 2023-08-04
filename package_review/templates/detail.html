@@ -8,12 +8,12 @@
 <p>{{object.refid}}</p>
 <p>QC Status: <span class="label">{{object.get_process_status_display}}</span></p>
 <h2>{{object.title}}</h2>
-{% if object.type == '1' %}
+{% if object.type == object.AUDIO %}
 <audio controls>
     <source src="{{MEDIA_URL}}/{{object.refid}}/{{object.refid}}_a.mp3" type="audio/mpeg">
     Your browser does not support the audio tag.
   </audio>
-{% elif object.type == '2' %}
+{% elif object.type == object.VIDEO %}
 <video width="320" height="240" controls>
     <source src="{{MEDIA_URL}}/{{object.refid}}/{{object.refid}}_a.mp4" type="video/mp4">
     Your browser does not support the video tag.
