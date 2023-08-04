@@ -10,6 +10,7 @@ services:
   - docker
 env:
   global:
+    - TIMESTAMP=$(date '+%Y%m%d%H%M%S')
     - CONTAINER=web
     - APPLICATION_NAME=digitized_av_qc
     - APPLICATION_PORT=8080
