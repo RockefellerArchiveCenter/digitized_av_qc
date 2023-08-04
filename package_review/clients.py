@@ -55,40 +55,6 @@ class AquilaClient(object):
             rights_statements (list of tuples): IDs and display strings of rights statements
         """
         return self.client.get(f'{self.baseurl}/api/rights/').json()
-        # return [
-        #     {
-        #         "title": "Copyright (Copyright term 120 years from date of creation.)",
-        #         "id": "1"
-        #     },
-        #     {
-        #         "title": "Copyright (Published work of corporate authorship - copyright term 95 years from date of publication.)",
-        #         "id": "2"
-        #     },
-        #     {
-        #         "title": "Copyright (Copyright term has expired.)",
-        #         "id": "3"
-        #     },
-        #     {
-        #         "title": "Policy (These materials may only be accessed in a reading room setting.)",
-        #         "id": "4"
-        #     },
-        #     {
-        #         "title": "Donor (These materials may only be accessed in a reading room setting.)",
-        #         "id": "5"
-        #     },
-        #     {
-        #         "title": "Policy (These materials have an online embargo period of 50 years.)",
-        #         "id": "6"
-        #     },
-        #     {
-        #         "title": "Policy (These materials have an online embargo period of 75 years.)",
-        #         "id": "7"
-        #     },
-        #     {
-        #         "title": "Policy (These materials may be made available online immediately.)",
-        #         "id": "8"
-        #     },
-        # ]
 
 
 class AWSClient(object):
@@ -126,7 +92,7 @@ class AWSClient(object):
             },
             'service': {
                 'DataType': 'String',
-                'StringValue': 'digitized_av_qc',
+                'StringValue': 'qc',
             },
             'outcome': {
                 'DataType': 'String',
