@@ -10,12 +10,11 @@ services:
   - docker
 env:
   global:
-    - CONTAINER: web
-    - APPLICATION_NAME: digitized_av_qc
-    - APPLICATION_PORT: 8080
+    - CONTAINER=web
+    - APPLICATION_NAME=digitized_av_qc
+    - APPLICATION_PORT=8080
 
 before_install:
-  - cp ${APPLICATION_NAME}/config.py.example ${APPLICATION_NAME}/config.py
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
   - docker-compose up -d
 
