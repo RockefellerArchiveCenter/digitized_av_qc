@@ -10,9 +10,8 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+from os import environ
 from pathlib import Path
-
-from digitized_av_qc import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -80,12 +79,12 @@ WSGI_APPLICATION = "digitized_av_qc.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": config.SQL_ENGINE,
-        "NAME": config.SQL_DB_NAME,
-        "USER": config.SQL_DB_USER,
-        "PASSWORD": config.SQL_DB_PASSWORD,
-        "HOST": config.SQL_HOST,
-        "PORT": config.SQL_PORT,
+        "ENGINE": environ.get('SQL_ENGINE'),
+        "NAME": environ.get('SQL_DB_NAME'),
+        "USER": environ.get('SQL_DB_USER'),
+        "PASSWORD": environ.get('SQL_DB_PASSWORD'),
+        "HOST": environ.get('SQL_HOST'),
+        "PORT": environ.get('SQL_PORT'),
     }
 }
 
@@ -136,27 +135,27 @@ CRON_CLASSES = [
     "package_review.cron.FetchRightsStatements",
 ]
 
-BASE_STORAGE_DIR = BASE_DIR / config.STORAGE_PATH
-BASE_DESTINATION_DIR = BASE_DIR / config.DESTINATION_PATH
+BASE_STORAGE_DIR = BASE_DIR / environ.get('STORAGE_PATH')
+BASE_DESTINATION_DIR = BASE_DIR / environ.get('DESTINATION_PATH')
 
 MEDIA_ROOT = BASE_STORAGE_DIR
 MEDIA_URL = '/media/'
 
 ARCHIVESSPACE = {
-    'baseurl': config.AS_BASEURL,
-    'repository': config.AS_REPO,
-    'username': config.AS_USERNAME,
-    'password': config.AS_PASSWORD,
+    'baseurl': environ.get('AS_BASEURL'),
+    'repository': environ.get('AS_REPO'),
+    'username': environ.get('AS_USERNAME'),
+    'password': environ.get('AS_PASSWORD'),
 }
 
 AQUILA = {
-    'baseurl': config.AQUILA_BASEURL
+    'baseurl': environ.get('AQUILA_BASEURL')
 }
 
 AWS = {
-    'access_key_id': config.AWS_ACCESS_KEY_ID,
-    'secret_access_key': config.AWS_SECRET_ACCESS_KEY,
-    'role_arn': config.AWS_ROLE_ARN,
-    'region': config.AWS_REGION,
-    'sns_topic': config.AWS_SNS_TOPIC
+    'access_key_id': environ.get('AWS_ACCESS_KEY_ID'),
+    'secret_access_key': environ.get('AWS_SECRET_ACCESS_KEY'),
+    'role_arn': environ.get('AWS_ROLE_ARN'),
+    'region': environ.get('AWS_REGION'),
+    'sns_topic': environ.get('AWS_SNS_TOPIC')
 }

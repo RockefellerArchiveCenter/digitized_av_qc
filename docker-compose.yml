@@ -14,6 +14,24 @@ services:
     entrypoint: /code/entrypoint.sh
     environment:
       - APPLICATION_PORT=${APPLICATION_PORT:-8080}
+      - SQL_ENGINE=django.db.backends.postgresql # Django database engine
+      - SQL_DB_NAME=postgres # Database to connect to
+      - SQL_DB_USER=postgres # Name of database user
+      - SQL_DB_PASSWORD=postgres # Password for database user
+      - SQL_HOST=db # Hostname for database
+      - SQL_PORT=5432 # Port for database
+      - STORAGE_PATH=storage # Path to original location of files, relative to BASE_DIR
+      - DESTINATION_PATH=destination # Path to destination location of files, relative to BASE_DIR
+      - AS_BASEURL=https://as.rockarch.org/api # BaseURL for ArchivesSpace instance
+      - AS_REPO=2 # ArchivesSpace repository to use
+      - AS_USERNAME=admin # ArchivesSpace username
+      - AS_PASSWORD=admin # ArchivesSpace password
+      - AQUILA_BASEURL=http://aquila.dev.rockarch.org # BaseURL for Aquila instance
+      - AWS_ACCESS_KEY_ID=foo # Access Key ID for AWS user
+      - AWS_SECRET_ACCESS_KEY=bar # Secret Access Key for AWS user
+      - AWS_ROLE_ARN=arn:aws:iam::123456789012:role/digitized-av-role # Role ARN for role to be assumed by AWS user
+      - AWS_REGION=us-east-1 # AWS region in which infrastructure is located (string)
+      - AWS_SNS_TOPIC=arn:aws:sns:us-east-1:123456789012:digitized-av-events # ARN for SNS Topic to be posted to (string)
     volumes:
       - .:/code
     ports:
