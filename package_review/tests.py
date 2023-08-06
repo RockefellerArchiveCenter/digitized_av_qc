@@ -8,7 +8,7 @@ import boto3
 from django.conf import settings
 from django.shortcuts import reverse
 from django.test import TestCase
-from moto import mock_sns, mock_sqs, mock_sts
+from moto import mock_sns, mock_sqs, mock_ssm, mock_sts
 from moto.core import DEFAULT_ACCOUNT_ID
 
 from .clients import ArchivesSpaceClient, AWSClient
@@ -53,16 +53,16 @@ class ArchivesSpaceClientTests(TestCase):
     def setUp(self, mock_init):
         mock_init.return_value = None
         self.client = ArchivesSpaceClient(
-            username=settings.ARCHIVESSPACE['username'],
-            password=settings.ARCHIVESSPACE['password'],
-            baseurl=settings.ARCHIVESSPACE['baseurl'],
-            repository=settings.ARCHIVESSPACE['repository'])
+            username='admin',
+            password='admin',
+            baseurl='https://archivesspace.org/api',
+            repository='2')
 
     def test_init(self):
         """Asserts repository identifier is correctly set."""
         self.assertEqual(
             self.client.repository,
-            settings.ARCHIVESSPACE['repository'])
+            '2')
 
     def test_get_av_number(self):
         """Asserts AV number is parsed correctly."""
@@ -130,6 +130,8 @@ class DiscoverPackagesCronTests(TestCase):
         with self.assertRaises(Exception):
             DiscoverPackages()._get_type(Path("1234"))
 
+    @mock_sts
+    @mock_ssm
     @patch('package_review.clients.ArchivesSpaceClient.__init__')
     @patch('package_review.clients.ArchivesSpaceClient.get_package_data')
     def test_do(self, mock_package_data, mock_init):

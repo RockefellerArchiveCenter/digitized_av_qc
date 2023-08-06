@@ -141,13 +141,6 @@ BASE_DESTINATION_DIR = BASE_DIR / environ.get('DESTINATION_PATH')
 MEDIA_ROOT = BASE_STORAGE_DIR
 MEDIA_URL = '/media/'
 
-ARCHIVESSPACE = {
-    'baseurl': environ.get('AS_BASEURL'),
-    'repository': environ.get('AS_REPO'),
-    'username': environ.get('AS_USERNAME'),
-    'password': environ.get('AS_PASSWORD'),
-}
-
 AQUILA = {
     'baseurl': environ.get('AQUILA_BASEURL')
 }

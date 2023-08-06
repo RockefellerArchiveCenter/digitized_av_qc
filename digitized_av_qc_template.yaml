@@ -1,0 +1,287 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  digitized-av-qc
+
+  Supports quality control of digitized audiovisual assets.
+
+Parameters:
+  ContainerAccountId:
+    Type: String
+    Description: Account ID under which container repository is located.
+    Default: "817658541382"
+  ApplicationEnvironment:
+    Type: String
+    Description: Environment in which application should be deployed.
+    AllowedValues:
+      - dev
+      - prod
+  ApplicationName:
+    Type: String
+    Description: Name of the application to be deployed.
+  EcsClusterName:
+    Type: String
+    Description: Name of the ECS Cluster in which service should be deployed.
+  EfsId:
+    Type: String
+    Description: Identifier for temporary storage EFS.
+  EfsAccessPointId:
+    Type: String
+    Description: Identifier for temporary storage EFS access point.
+  EfsRootPath:
+    Type: String
+    Description: Root path at which EFS is mounted.
+  StoragePath:
+    Type: String
+    Description: Location in EFS mount at which source files are stored.
+  DestinationPath:
+    Type: String
+    Description: Location in EFS mount to which files are delivered.
+  ArchivesSpaceRepo:
+    Type: String
+    Description: ArchivesSpace repository identifier.
+  ArchivesSpaceBaseUrl:
+    Type: String
+    Description: ArchivesSpace base URL.
+  ArchivesSpaceUsername:
+    Type: String
+    Description: ArchivesSpace username.
+  ArchivesSpacePassword:
+    Type: String
+    Description: ArchivesSpace password.
+  SqlDatabaseName:
+    Type: String
+    Description: Name of database.
+    Default: postgres
+  SqlDatabaseUser:
+    Type: String
+    Description: Database user.
+    Default: postgres
+  SqlDatabasePassword:
+    Type: String
+    Description: Database password.
+    Default: postgres
+
+Resources:  
+  ArchivesSpaceRepoParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: ArchivesSpace repository identifier.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AS_REPO
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref ArchivesSpaceRepo
+  ArchivesSpaceBaseUrlParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: ArchivesSpace base URL.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AS_BASEURL
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref ArchivesSpaceBaseUrl
+  ArchivesSpaceUsernameParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: ArchivesSpace username.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AS_USERNAME
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref ArchivesSpaceUsername
+  ArchivesSpacePasswordParameter:
+    Type: AWS::SSM::Parameter
+    Properties: 
+      Description: ArchivesSpace password.
+      Name: !Sub /${ApplicationEnvironment}/${ApplicationName}/AS_PASSWORD
+      Tags: 
+        Environment: !Ref ApplicationEnvironment
+        Application: !Ref ApplicationName
+      Type: String
+      Value: !Ref ArchivesSpacePassword
+
+  ECSTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+      Policies:
+        - PolicyName: CreateLogGroupPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - 'logs:CreateLogGroup'
+                Resource: 
+                  - '*'
+
+  DigitizedAvQcUser:
+    Type: AWS::IAM::User
+
+  DigitizedAvQcUserAccessKey:
+    Type: AWS::IAM::AccessKey
+    Properties: 
+      UserName: !Ref DigitizedAvQcUser
+
+  DigitizedAvQcRole:
+    Type: AWS::IAM::Role
+    Properties: 
+      RoleName: digitized-av-qc-role
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS:
+                - !GetAtt DigitizedAvQcUser.Arn
+            Action:
+              - 'sts:AssumeRole'
+      Description: !Sub 'Allows creation of SNS messages.'
+      Policies:
+        - PolicyName: DigitizedAvQcSNSPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 'sns:Publish'
+                Resource: !ImportValue DigitizedAV-SNSTopicArn
+        - PolicyName: DigitizedAvQcSSMPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: 
+                  - 'ssm:GetParametersByPath'
+                Resource:
+                  - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ApplicationEnvironment}/${ApplicationName}
+
+  QcECSTask:
+    Type: AWS::ECS::TaskDefinition
+    Properties: 
+      Cpu: "1024"
+      Memory: "3072"
+      ContainerDefinitions: 
+        - Name: !Ref ApplicationName
+          Image: !Sub "${ContainerAccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ApplicationName}:latest"
+          DependsOn:
+            - ContainerName: !Sub "${ApplicationName}Database"
+              Condition: START
+          Essential: true
+          Environment:
+            - Name: ENV
+              Value: !Ref ApplicationEnvironment
+            - Name: APP_CONFIG_PATH
+              Value: !Ref ApplicationName
+            - Name: APPLICATION_PORT
+              Value: "80"
+            - Name: AWS_ACCESS_KEY_ID
+              Value: !Ref DigitizedAvQcUserAccessKey
+            - Name: AWS_SECRET_ACCESS_KEY
+              Value: !GetAtt DigitizedAvQcUserAccessKey.SecretAccessKey
+            - Name: AWS_REGION
+              Value: !Ref AWS::Region
+            - Name: AWS_ROLE_ARN
+              Value: !GetAtt DigitizedAvQcRole.Arn
+            - Name: STORAGE_PATH
+              Value: !Sub '${EfsRootPath}/${StoragePath}'
+            - Name: DESTINATION_PATH
+              Value: !Sub '${EfsRootPath}/${DestinationPath}'
+            - Name: AWS_SNS_TOPIC
+              Value: !ImportValue DigitizedAV-SNSTopicArn
+            - Name: AQUILA_BASEURL
+              Value: http://aquila.dev.rockarch.org
+            - Name: SQL_ENGINE
+              Value: django.db.backends.postgresql
+            - Name: SQL_HOST
+              Value: !Sub "${ApplicationName}Database"
+            - Name: SQL_PORT
+              Value: "5432"
+            - Name: SQL_DB_NAME
+              Value: !Ref SqlDatabaseName
+            - Name: SQL_DB_USER
+              Value: !Ref SqlDatabaseUser
+            - Name: SQL_DB_PASSWORD
+              Value: !Ref SqlDatabasePassword
+          MountPoints:
+            - SourceVolume: efs
+              ContainerPath: !Ref EfsRootPath
+              ReadOnly: false
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              "awslogs-create-group": "true"
+              "awslogs-group": !Sub "/ecs/${ApplicationName}"
+              "awslogs-region": !Ref AWS::Region
+              "awslogs-stream-prefix": "ecs"
+        - Name: !Sub "${ApplicationName}Database"
+          Image: postgres:14.4
+          Essential: true
+          Environment:
+            - Name: POSTGRES_USER
+              Value: !Ref SqlDatabaseUser
+            - Name: POSTGRES_PASSWORD
+              Value: !Ref SqlDatabasePassword
+            - Name: POSTGRES_DB
+              Value: !Ref SqlDatabaseName
+          MountPoints:
+            - SourceVolume: dbvolume
+              ContainerPath: /var/lib/postgresql/data/
+              ReadOnly: false
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              "awslogs-create-group": "true"
+              "awslogs-group": !Sub "/ecs/${ApplicationName}-database"
+              "awslogs-region": !Ref AWS::Region
+              "awslogs-stream-prefix": "ecs"
+      ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
+      Family: !Ref ApplicationName
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+        - FARGATE
+      RuntimePlatform:
+        CpuArchitecture: X86_64
+        OperatingSystemFamily: LINUX
+      Volumes: 
+        - Name: efs
+          EFSVolumeConfiguration:
+            FilesystemId: !Ref EfsId
+            RootDirectory: /
+            TransitEncryption: ENABLED
+            AuthorizationConfig:
+              AccessPointId: !Ref EfsAccessPointId
+              IAM: DISABLED 
+        - Name: dbvolume
+          EFSVolumeConfiguration:
+            FilesystemId: !Ref EfsId
+            RootDirectory: /db
+            TransitEncryption: ENABLED
+            AuthorizationConfig:
+              AccessPointId: !Ref EfsAccessPointId
+              IAM: DISABLED  
+
+  QcECSService:
+    Type: AWS::ECS::Service
+    Properties: 
+      Cluster: !Ref EcsClusterName
+      DesiredCount: 1
+      TaskDefinition: !Ref QcECSTask
+  
+
+Outputs:
+  QcECSTask:
+    Description: QC ECS Task Definition ARN
+    Value: !Ref QcECSTask

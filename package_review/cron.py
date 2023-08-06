@@ -1,7 +1,9 @@
+from os import environ
+
 from django.conf import settings
 from django_cron import CronJobBase, Schedule
 
-from .clients import AquilaClient, ArchivesSpaceClient
+from .clients import AquilaClient, ArchivesSpaceClient, AWSClient
 from .models import Package, RightsStatement
 
 
@@ -23,11 +25,26 @@ class DiscoverPackages(CronJobBase):
 
     def do(self):
         created_list = []
+        aws_client = AWSClient(
+            'ssm',
+            settings.AWS['access_key_id'],
+            settings.AWS['secret_access_key'],
+            settings.AWS['region'],
+            settings.AWS['role_arn']).client
+        configuration = {}
+        param_details = aws_client.get_parameters_by_path(
+            Path=f"/{environ.get('ENV')}/{environ.get('APP_CONFIG_PATH')}",
+            Recursive=False,
+            WithDecryption=True)
+        for param in param_details.get('Parameters', []):
+            param_path_array = param.get('Name').split("/")
+            section_name = param_path_array[-1]
+            configuration[section_name] = param.get('Value')
         client = ArchivesSpaceClient(
-            username=settings.ARCHIVESSPACE['username'],
-            password=settings.ARCHIVESSPACE['password'],
-            baseurl=settings.ARCHIVESSPACE['baseurl'],
-            repository=settings.ARCHIVESSPACE['repository'])
+            baseurl=configuration.get('AS_BASEURL'),
+            username=configuration.get('AS_USERNAME'),
+            password=configuration.get('AS_PASSWORD'),
+            repository=configuration.get('repository'))
         for package_path in settings.BASE_STORAGE_DIR.iterdir():
             refid = package_path.stem
             if not Package.objects.filter(refid=refid, process_status__in=[Package.PENDING, Package.APPROVED]).exists():
