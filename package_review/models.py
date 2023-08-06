@@ -27,6 +27,11 @@ class Package(models.Model):
     def __str__(self):
         return f'{self.av_number} {self.title}'
 
+    @property
+    def av_number_normalized(self):
+        """Returns a numeric representation of AV number."""
+        return self.av_number.split(' ')[-1]
+
 
 class RightsStatement(models.Model):
     """Rights statement stored in Aquila."""
