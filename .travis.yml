@@ -13,7 +13,7 @@ env:
     - TIMESTAMP=$(date '+%Y%m%d%H%M%S')
     - CONTAINER=web
     - APPLICATION_NAME=digitized_av_qc
-    - APPLICATION_PORT=8080
+    - APPLICATION_PORT=80
 
 before_install:
   - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin

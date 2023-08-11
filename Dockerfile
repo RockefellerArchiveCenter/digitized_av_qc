@@ -7,4 +7,4 @@ RUN pip install -r requirements.txt
 ADD . /code/
 
 FROM base as build
-EXPOSE 8080
+EXPOSE 80
