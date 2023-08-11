@@ -30,6 +30,15 @@ Parameters:
   EfsRootPath:
     Type: String
     Description: Root path at which EFS is mounted.
+  VpcId:
+    Type: String
+    Description: VPC in which load balancer should be placed.
+  SubnetId:
+    Type: String
+    Description: Subnet in which service should run.
+  Listener:
+    Description: The Application Load Balancer listener to register with
+    Type: String
   StoragePath:
     Type: String
     Description: Location in EFS mount at which source files are stored.
@@ -177,7 +186,7 @@ Resources:
         - Name: !Ref ApplicationName
           Image: !Sub "${ContainerAccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ApplicationName}:latest"
           DependsOn:
-            - ContainerName: !Sub "${ApplicationName}Database"
+            - ContainerName: !Sub "${ApplicationName}_database"
               Condition: START
           Essential: true
           Environment:
@@ -219,32 +228,13 @@ Resources:
             - SourceVolume: efs
               ContainerPath: !Ref EfsRootPath
               ReadOnly: false
+          PortMappings:
+            - ContainerPort: 80
           LogConfiguration:
             LogDriver: awslogs
             Options:
               "awslogs-create-group": "true"
               "awslogs-group": !Sub "/ecs/${ApplicationName}"
-              "awslogs-region": !Ref AWS::Region
-              "awslogs-stream-prefix": "ecs"
-        - Name: !Sub "${ApplicationName}Database"
-          Image: postgres:14.4
-          Essential: true
-          Environment:
-            - Name: POSTGRES_USER
-              Value: !Ref SqlDatabaseUser
-            - Name: POSTGRES_PASSWORD
-              Value: !Ref SqlDatabasePassword
-            - Name: POSTGRES_DB
-              Value: !Ref SqlDatabaseName
-          MountPoints:
-            - SourceVolume: dbvolume
-              ContainerPath: /var/lib/postgresql/data/
-              ReadOnly: false
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              "awslogs-create-group": "true"
-              "awslogs-group": !Sub "/ecs/${ApplicationName}-database"
               "awslogs-region": !Ref AWS::Region
               "awslogs-stream-prefix": "ecs"
       ExecutionRoleArn: !GetAtt ECSTaskExecutionRole.Arn
@@ -263,23 +253,46 @@ Resources:
             TransitEncryption: ENABLED
             AuthorizationConfig:
               AccessPointId: !Ref EfsAccessPointId
-              IAM: DISABLED 
-        - Name: dbvolume
-          EFSVolumeConfiguration:
-            FilesystemId: !Ref EfsId
-            RootDirectory: /db
-            TransitEncryption: ENABLED
-            AuthorizationConfig:
-              AccessPointId: !Ref EfsAccessPointId
-              IAM: DISABLED  
+              IAM: DISABLED
 
   QcECSService:
     Type: AWS::ECS::Service
+    DependsOn: ListenerRule
     Properties: 
       Cluster: !Ref EcsClusterName
-      DesiredCount: 1
+      LaunchType: FARGATE
+      DesiredCount: 0
       TaskDefinition: !Ref QcECSTask
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: DISABLED
+          Subnets:
+            - !Ref SubnetId
+      LoadBalancers:
+        - TargetGroupArn: !Ref TargetGroup
+          ContainerPort: 80
+          ContainerName: !Ref ApplicationName
   
+  TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      TargetType: ip
+      VpcId: !Ref VpcId
+      Port: 80
+      Protocol: HTTP
+
+  ListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      ListenerArn: !Ref Listener
+      Priority: 1
+      Conditions:
+        - Field: path-pattern
+          Values:
+            - /
+      Actions:
+        - TargetGroupArn: !Ref TargetGroup
+          Type: forward
 
 Outputs:
   QcECSTask:
