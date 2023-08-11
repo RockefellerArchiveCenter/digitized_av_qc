@@ -7,6 +7,11 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
     volumes:
       - dbvolume:/var/lib/postgresql/data/
   web:
@@ -33,7 +38,8 @@ services:
     ports:
       - "${APPLICATION_PORT:-80}:${APPLICATION_PORT:-80}"
     depends_on:
-    - db
+      db:
+        condition: service_healthy
 
 volumes:
   dbvolume:

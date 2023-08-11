@@ -1,11 +1,7 @@
 #!/bin/bash
 
 # Apply database migrations
-if [ ! -f manage.py ]; then
-  cd digitized_av_qc
-fi
-
-./wait-for-it.sh db:5432 -- echo "Apply database migrations"
+echo "Apply database migrations"
 python manage.py migrate
 
 #Start server
