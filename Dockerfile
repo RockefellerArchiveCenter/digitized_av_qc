@@ -7,7 +7,7 @@ COPY . /var/www/digitized-av-qc
 
 FROM base as build
 RUN apt-get update
-RUN apt-get install --yes apache2 apache2-dev
+RUN apt-get install --yes apache2 apache2-dev cron
 RUN wget https://github.com/GrahamDumpleton/mod_wsgi/archive/refs/tags/4.9.0.tar.gz \
     && tar xvfz 4.9.0.tar.gz \
     && cd mod_wsgi-4.9.0 \
