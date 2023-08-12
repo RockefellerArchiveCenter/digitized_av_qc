@@ -10,7 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
-from os import environ
+from os import getenv
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -79,12 +79,12 @@ WSGI_APPLICATION = "digitized_av_qc.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": environ.get('SQL_ENGINE'),
-        "NAME": environ.get('SQL_DB_NAME'),
-        "USER": environ.get('SQL_DB_USER'),
-        "PASSWORD": environ.get('SQL_DB_PASSWORD'),
-        "HOST": environ.get('SQL_HOST'),
-        "PORT": environ.get('SQL_PORT'),
+        "ENGINE": getenv('SQL_ENGINE'),
+        "NAME": getenv('SQL_DB_NAME'),
+        "USER": getenv('SQL_DB_USER'),
+        "PASSWORD": getenv('SQL_DB_PASSWORD'),
+        "HOST": getenv('SQL_HOST'),
+        "PORT": getenv('SQL_PORT'),
     }
 }
 
@@ -136,20 +136,20 @@ CRON_CLASSES = [
     "package_review.cron.FetchRightsStatements",
 ]
 
-BASE_STORAGE_DIR = BASE_DIR / environ.get('STORAGE_PATH')
-BASE_DESTINATION_DIR = BASE_DIR / environ.get('DESTINATION_PATH')
+BASE_STORAGE_DIR = BASE_DIR / getenv('STORAGE_PATH')
+BASE_DESTINATION_DIR = BASE_DIR / getenv('DESTINATION_PATH')
 
 MEDIA_ROOT = BASE_STORAGE_DIR
 MEDIA_URL = '/media/'
 
 AQUILA = {
-    'baseurl': environ.get('AQUILA_BASEURL')
+    'baseurl': getenv('AQUILA_BASEURL')
 }
 
 AWS = {
-    'access_key_id': environ.get('AWS_ACCESS_KEY_ID'),
-    'secret_access_key': environ.get('AWS_SECRET_ACCESS_KEY'),
-    'role_arn': environ.get('AWS_ROLE_ARN'),
-    'region': environ.get('AWS_REGION'),
-    'sns_topic': environ.get('AWS_SNS_TOPIC')
+    'access_key_id': getenv('AWS_ACCESS_KEY_ID'),
+    'secret_access_key': getenv('AWS_SECRET_ACCESS_KEY'),
+    'role_arn': getenv('AWS_ROLE_ARN'),
+    'region': getenv('AWS_REGION'),
+    'sns_topic': getenv('AWS_SNS_TOPIC')
 }
