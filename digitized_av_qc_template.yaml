@@ -334,6 +334,7 @@ Resources:
       VpcId: !Ref VpcId
       Port: 80
       Protocol: HTTP
+      HealthCheckPath: /health/
 
   ListenerRule:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
