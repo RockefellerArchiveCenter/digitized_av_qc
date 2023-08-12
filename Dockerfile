@@ -25,5 +25,8 @@ RUN a2enmod headers
 RUN a2enmod rewrite
 RUN a2enmod wsgi
 
+COPY --chmod=644 crontab /etc/cron.d/crontab
+RUN crontab /etc/cron.d/crontab
+
 EXPOSE 80
 ENTRYPOINT [ "./entrypoint.prod.sh" ]
