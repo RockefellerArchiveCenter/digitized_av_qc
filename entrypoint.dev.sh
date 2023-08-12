@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Apply database migrations
-echo "Apply database migrations"
+./wait-for-it.sh ${SQL_HOST}:${SQL_PORT} -- echo "Apply database migrations"
 python manage.py migrate
 
 #Start server
