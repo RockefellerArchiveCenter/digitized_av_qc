@@ -15,8 +15,11 @@ services:
     volumes:
       - dbvolume:/var/lib/postgresql/data/
   web:
-    build: .
-    entrypoint: /code/entrypoint.sh
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: base
+    command: /var/www/digitized-av-qc/entrypoint.dev.sh
     environment:
       - APPLICATION_PORT=${APPLICATION_PORT:-80}
       - SQL_ENGINE=django.db.backends.postgresql # Django database engine
