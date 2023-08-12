@@ -1,8 +1,9 @@
 FROM python:3.10-buster as base
 
-COPY . /var/www/digitized-av-qc
+COPY requirements.txt /var/www/digitized-av-qc/requirements.txt
 WORKDIR /var/www/digitized-av-qc
 RUN pip install -r requirements.txt
+COPY . /var/www/digitized-av-qc
 
 FROM base as build
 RUN apt-get update

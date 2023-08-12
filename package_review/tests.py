@@ -229,3 +229,10 @@ class PackageActionViewTests(TestCase):
     def tearDown(self):
         if Path(settings.BASE_DESTINATION_DIR).exists():
             shutil.rmtree(Path(settings.BASE_DESTINATION_DIR))
+
+
+class HealthCheckEndpointTests(TestCase):
+
+    def test_endpoint_response(self):
+        resp = self.client.get('/health/')
+        self.assertEqual(resp.status_code, 200)
