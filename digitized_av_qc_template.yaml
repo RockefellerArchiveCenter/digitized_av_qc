@@ -69,6 +69,14 @@ Parameters:
     Type: String
     Description: Database password.
     Default: postgres
+  SqlDatabasePort:
+    Type: Number
+    Description: Port at which SQL database is available.
+    Default: 5432
+  SqlVersion:
+    Type: String
+    Description: Version of the SQL engine to use.
+    Default: '15.2'
 
 Resources:  
   ArchivesSpaceRepoParameter:
@@ -176,7 +184,31 @@ Resources:
                   - 'ssm:GetParametersByPath'
                 Resource:
                   - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ApplicationEnvironment}/${ApplicationName}
+  
+  DBCluster:
+    Type: AWS::RDS::DBCluster
+    DeletionPolicy: Snapshot
+    UpdateReplacePolicy: Snapshot
+    Properties:
+      DatabaseName: !Ref SqlDatabaseName
+      Engine: aurora-postgresql
+      EngineVersion: !Ref SqlVersion
+      Port: !Ref SqlDatabasePort
+      MasterUsername: !Ref SqlDatabaseUser
+      MasterUserPassword: !Ref SqlDatabasePassword
+      ServerlessV2ScalingConfiguration:
+        MaxCapacity: 32.0
+        MinCapacity: 8.0
 
+  PostgresDatabase:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      DBInstanceClass: db.serverless
+      DBClusterIdentifier: !Ref DBCluster
+      Engine: aurora-postgresql
+      EngineVersion: '15.2'
+      PubliclyAccessible: false
+  
   QcECSTask:
     Type: AWS::ECS::TaskDefinition
     Properties: 
@@ -185,9 +217,6 @@ Resources:
       ContainerDefinitions: 
         - Name: !Ref ApplicationName
           Image: !Sub "${ContainerAccountId}.dkr.ecr.${AWS::Region}.amazonaws.com/${ApplicationName}:latest"
-          DependsOn:
-            - ContainerName: !Sub "${ApplicationName}_database"
-              Condition: START
           Essential: true
           Environment:
             - Name: ENV
@@ -215,9 +244,9 @@ Resources:
             - Name: SQL_ENGINE
               Value: django.db.backends.postgresql
             - Name: SQL_HOST
-              Value: !Sub "${ApplicationName}Database"
+              Value: !GetAtt PostgresDatabase.Endpoint.Address
             - Name: SQL_PORT
-              Value: "5432"
+              Value: !Ref SqlDatabasePort
             - Name: SQL_DB_NAME
               Value: !Ref SqlDatabaseName
             - Name: SQL_DB_USER
