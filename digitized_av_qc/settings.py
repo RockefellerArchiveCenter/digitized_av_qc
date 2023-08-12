@@ -10,7 +10,8 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
-from os import environ
+import json
+from os import environ, getenv
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -28,6 +29,12 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+if getenv('ECS_CONTAINER_METADATA_FILE'):
+    metadata_file_path = environ['ECS_CONTAINER_METADATA_FILE']
+    with open(metadata_file_path) as f:
+        metadata = json.load(f)
+    private_ip = metadata["HostPrivateIPv4Address"]
+    ALLOWED_HOSTS.append(private_ip)
 
 # Application definition
 
