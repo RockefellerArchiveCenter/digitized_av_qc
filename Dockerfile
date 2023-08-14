@@ -26,7 +26,6 @@ RUN a2enmod rewrite
 RUN a2enmod wsgi
 
 COPY crontab /etc/cron.d/crontab
-RUN chmod 644 /etc/cron.d/crontab
 RUN crontab /etc/cron.d/crontab
 
 EXPOSE 80
