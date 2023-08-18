@@ -57,7 +57,21 @@ class DiscoverPackages(CronJobBase):
                     process_status=Package.PENDING)
                 created_list.append(refid)
 
-        return f'Packages created: {", ".join(created_list)}' if len(created_list) else 'No new packages to discover.'
+        if len(created_list):
+            return f'Packages created: {", ".join(created_list)}'
+        else:
+            sns_client = AWSClient(
+                'sns',
+                settings.AWS['access_key_id'],
+                settings.AWS['secret_access_key'],
+                settings.AWS['region'],
+                settings.AWS['role_arn'])
+            sns_client.deliver_message(
+                settings.AWS['sns_topic'],
+                None,
+                'No packages left to QC',
+                'COMPLETE')
+            return 'No new packages to discover.'
 
 
 class FetchRightsStatements(CronJobBase):
