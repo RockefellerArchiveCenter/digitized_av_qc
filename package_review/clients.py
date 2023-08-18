@@ -82,14 +82,6 @@ class AWSClient(object):
     def deliver_message(self, sns_topic, package, message, outcome, rights_ids=None):
         """Delivers message to SNS Topic."""
         attributes = {
-            'format': {
-                'DataType': 'String',
-                'StringValue': package.get_type_display(),
-            },
-            'refid': {
-                'DataType': 'String',
-                'StringValue': package.refid,
-            },
             'service': {
                 'DataType': 'String',
                 'StringValue': 'qc',
@@ -99,6 +91,15 @@ class AWSClient(object):
                 'StringValue': outcome,
             }
         }
+        if package:
+            attributes['format'] = {
+                'DataType': 'String',
+                'StringValue': package.get_type_display(),
+            }
+            attributes['refid'] = {
+                'DataType': 'String',
+                'StringValue': package.refid,
+            }
         if rights_ids:
             attributes['rights_ids'] = {
                 'DataType': 'String',
