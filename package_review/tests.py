@@ -134,16 +134,23 @@ class DiscoverPackagesCronTests(TestCase):
     @mock_ssm
     @patch('package_review.clients.ArchivesSpaceClient.__init__')
     @patch('package_review.clients.ArchivesSpaceClient.get_package_data')
-    def test_do(self, mock_package_data, mock_init):
+    @patch('package_review.clients.AWSClient.deliver_message')
+    def test_do(self, mock_message, mock_package_data, mock_init):
         """Asserts cron produces expected results."""
         expected_len = len(list(Path(settings.BASE_STORAGE_DIR).iterdir()))
         mock_init.return_value = None
         mock_package_data.return_value = "foo", "bar"
+
         output = DiscoverPackages().do()
         self.assertTrue(isinstance(output, str))
         mock_init.assert_called_once()
+        mock_message.assert_not_called()
         self.assertEqual(mock_package_data.call_count, expected_len)
         self.assertEqual(Package.objects.all().count(), expected_len)
+
+        output = DiscoverPackages().do()
+        mock_message.assert_called_once_with(
+            settings.AWS['sns_topic'], None, 'No packages left to QC', 'COMPLETE')
 
     def tearDown(self):
         for dir in Path(settings.BASE_STORAGE_DIR).iterdir():
