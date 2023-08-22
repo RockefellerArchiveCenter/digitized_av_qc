@@ -36,6 +36,9 @@ Parameters:
   SubnetId:
     Type: String
     Description: Subnet in which service should run.
+  LoadBalancerSubnets:
+    Type: List<String>
+    Description: Subnets for load balancer.
   SecurityGroup:
     Type: String
     Description: Security Group for load balancer.
@@ -60,15 +63,7 @@ Parameters:
   SqlDatabaseName:
     Type: String
     Description: Name of database.
-    Default: postgres
-  SqlDatabaseUser:
-    Type: String
-    Description: Database user.
-    Default: postgres
-  SqlDatabasePassword:
-    Type: String
-    Description: Database password.
-    Default: postgres
+    Default: digitized_av_qc_db
   SqlDatabasePort:
     Type: Number
     Description: Port at which SQL database is available.
@@ -185,6 +180,16 @@ Resources:
                 Resource:
                   - !Sub arn:aws:ssm:${AWS::Region}:${AWS::AccountId}:parameter/${ApplicationEnvironment}/${ApplicationName}
   
+  DBSecrets:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Description: 'Secrets for RDS instance'
+      GenerateSecretString:
+        SecretStringTemplate: '{"username": "digitizedavqcuser"}'
+        GenerateStringKey: 'password'
+        PasswordLength: 16
+        ExcludeCharacters: '"@/\'
+
   DBCluster:
     Type: AWS::RDS::DBCluster
     DeletionPolicy: Snapshot
@@ -194,8 +199,8 @@ Resources:
       Engine: aurora-postgresql
       EngineVersion: !Ref SqlVersion
       Port: !Ref SqlDatabasePort
-      MasterUsername: !Ref SqlDatabaseUser
-      MasterUserPassword: !Ref SqlDatabasePassword
+      MasterUsername: !Join ['', ['{{resolve:secretsmanager:', !Ref DBSecrets, ':SecretString:username}}' ]]
+      MasterUserPassword: !Join ['', ['{{resolve:secretsmanager:', !Ref DBSecrets, ':SecretString:password}}' ]]
       ServerlessV2ScalingConfiguration:
         MaxCapacity: 32.0
         MinCapacity: 8.0
@@ -250,9 +255,9 @@ Resources:
             - Name: SQL_DB_NAME
               Value: !Ref SqlDatabaseName
             - Name: SQL_DB_USER
-              Value: !Ref SqlDatabaseUser
+              Value: !Join ['', ['{{resolve:secretsmanager:', !Ref DBSecrets, ':SecretString:username}}' ]]
             - Name: SQL_DB_PASSWORD
-              Value: !Ref SqlDatabasePassword
+              Value: !Join ['', ['{{resolve:secretsmanager:', !Ref DBSecrets, ':SecretString:password}}' ]]
           MountPoints:
             - SourceVolume: efs
               ContainerPath: !Ref EfsRootPath
@@ -307,9 +312,7 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
       Name: DigitizedAvLoadBalancer
-      Subnets: 
-        - !Ref SubnetId
-        - "subnet-016449c4b44a0fc44"
+      Subnets: !Ref LoadBalancerSubnets
       SecurityGroups:
         - !Ref SecurityGroup
       Tags:
