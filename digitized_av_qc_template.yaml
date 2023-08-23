@@ -18,6 +18,9 @@ Parameters:
   ApplicationName:
     Type: String
     Description: Name of the application to be deployed.
+  ApplicationHostName:
+    Type: String
+    Description: Hostname of the application to be deployed.
   EcsClusterName:
     Type: String
     Description: Name of the ECS Cluster in which service should be deployed.
@@ -228,6 +231,8 @@ Resources:
               Value: !Ref ApplicationEnvironment
             - Name: APP_CONFIG_PATH
               Value: !Ref ApplicationName
+            - Name: ALLOWED_HOSTS
+              Value: !Ref ApplicationHostName
             - Name: APPLICATION_PORT
               Value: "80"
             - Name: AWS_ACCESS_KEY_ID
