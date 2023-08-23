@@ -311,8 +311,8 @@ Resources:
   LoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
-      Name: DigitizedAvLoadBalancer
       Subnets: !Ref LoadBalancerSubnets
+      Scheme: internal
       SecurityGroups:
         - !Ref SecurityGroup
       Tags:
