@@ -34,12 +34,15 @@ class ArchivesSpaceClient(ASpace):
             object title, av_number (tuple of strings): data about the object.
         """
         results = self.client.get(f"/repositories/{self.repository}/find_by_id/archival_objects?ref_id[]={refid}&resolve[]=archival_objects").json()
-        if len(results['archival_objects']) != 1:
-            raise Exception(f'Expecting to get only one result for ref id {refid} but got {len(results["archival_objects"])} instead.')
-        object = results['archival_objects'][0]['_resolved']
-        av_number = self.get_av_number(object['instances'])
+        try:
+            if len(results['archival_objects']) != 1:
+                raise Exception(f'Expecting to get only one result for ref id {refid} but got {len(results["archival_objects"])} instead.')
+            object = results['archival_objects'][0]['_resolved']
+            av_number = self.get_av_number(object['instances'])
 
-        return object['display_string'], av_number
+            return object['display_string'], av_number
+        except KeyError:
+            raise Exception(f'Unable to fetch results for {refid}. Got results {results}')
 
 
 class AquilaClient(object):
