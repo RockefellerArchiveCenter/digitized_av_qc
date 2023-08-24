@@ -11,5 +11,8 @@ python ./manage.py collectstatic --no-input
 # start cron
 cron
 
+# run crons to pull in data
+python ./manage.py runcrons
+
 # start Apache
 apache2ctl -D FOREGROUND
