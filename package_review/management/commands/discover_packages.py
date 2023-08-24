@@ -61,10 +61,11 @@ class Command(BaseCommand):
                         process_status=Package.PENDING)
                     created_list.append(refid)
                 except Exception as e:
+                    exception = "\n".join(traceback.format_exception(e))
                     sns_client.deliver_message(
                         settings.AWS['sns_topic'],
                         refid,
-                        f'Error discovering refid {refid}: {"".join(traceback.format_exception(e))}',
+                        f'Error discovering refid {refid}: {exception}',
                         'FAILURE')
                     continue
 
