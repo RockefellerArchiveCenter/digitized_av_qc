@@ -64,7 +64,7 @@ class Command(BaseCommand):
                     sns_client.deliver_message(
                         settings.AWS['sns_topic'],
                         refid,
-                        f'Error discovering refid {refid}: {traceback.print_exception(e)}',
+                        f'Error discovering refid {refid}: {"".join(traceback.format_exception(e))}',
                         'FAILURE')
                     continue
 
