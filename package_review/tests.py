@@ -135,7 +135,7 @@ class DiscoverPackagesCommandTests(TestCase):
     @patch('package_review.clients.ArchivesSpaceClient.__init__')
     @patch('package_review.clients.ArchivesSpaceClient.get_package_data')
     @patch('package_review.clients.AWSClient.deliver_message')
-    def test_do(self, mock_message, mock_package_data, mock_init):
+    def test_handle(self, mock_message, mock_package_data, mock_init):
         """Asserts cron produces expected results."""
         expected_len = len(list(Path(settings.BASE_STORAGE_DIR).iterdir()))
         mock_init.return_value = None
@@ -151,6 +151,20 @@ class DiscoverPackagesCommandTests(TestCase):
         mock_message.assert_called_once_with(
             settings.AWS['sns_topic'], None, 'No packages left to QC', 'COMPLETE')
 
+    @mock_sns
+    @mock_sts
+    @mock_ssm
+    @patch('package_review.clients.ArchivesSpaceClient.__init__')
+    @patch('package_review.clients.ArchivesSpaceClient.get_package_data')
+    @patch('package_review.clients.AWSClient.deliver_message')
+    def test_handle_exception(self, mock_message, mock_package_data, mock_init):
+        """Asserts exceptions while processing packages are handled as expected."""
+        expected_len = len(list(Path(settings.BASE_STORAGE_DIR).iterdir()))
+        mock_package_data.side_effect = Exception("foo")
+        mock_init.return_value = None
+        discover_packages.Command().handle()
+        self.assertEqual(mock_message.call_count, expected_len + 1)
+
     def tearDown(self):
         for dir in Path(settings.BASE_STORAGE_DIR).iterdir():
             shutil.rmtree(dir)
@@ -159,7 +173,7 @@ class DiscoverPackagesCommandTests(TestCase):
 class FetchRightsStatementsCommandTests(TestCase):
 
     @patch('package_review.clients.AquilaClient.available_rights_statements')
-    def test_do(self, mock_rights):
+    def test_handle(self, mock_rights):
         """Asserts FetchRights cron only adds new rights statements."""
         rights_statements = [{"id": "1", "title": "foo"}, {"id": "2", "title": "bar"}]
         mock_rights.return_value = rights_statements
