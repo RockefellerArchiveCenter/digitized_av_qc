@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "django_cron",
+    "django_crontab",
     "package_review",
 ]
 
@@ -130,11 +130,6 @@ STATIC_ROOT = "static/"
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
-
-CRON_CLASSES = [
-    "package_review.cron.DiscoverPackages",
-    "package_review.cron.FetchRightsStatements",
-]
 
 BASE_STORAGE_DIR = BASE_DIR / getenv('STORAGE_PATH')
 BASE_DESTINATION_DIR = BASE_DIR / getenv('DESTINATION_PATH')

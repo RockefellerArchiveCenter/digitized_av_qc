@@ -12,7 +12,7 @@ from moto import mock_sns, mock_sqs, mock_ssm, mock_sts
 from moto.core import DEFAULT_ACCOUNT_ID
 
 from .clients import ArchivesSpaceClient, AWSClient
-from .cron import DiscoverPackages, FetchRightsStatements
+from .management.commands import discover_packages, fetch_rights_statements
 from .models import Package, RightsStatement
 
 FIXTURE_DIR = "fixtures"
@@ -116,7 +116,7 @@ class AWSClientTests(TestCase):
         self.assertEqual(message_body['MessageAttributes']['rights_ids']['Value'], "1,2")
 
 
-class DiscoverPackagesCronTests(TestCase):
+class DiscoverPackagesCommandTests(TestCase):
 
     def setUp(self):
         copy_binaries()
@@ -124,11 +124,11 @@ class DiscoverPackagesCronTests(TestCase):
     def test_get_type(self):
         """Asserts correct types are returned."""
         for (refid, expected) in [("9ba10e5461d401517b0e1a53d514ec87", Package.VIDEO), ("f7d3dd6dc9c4732fa17dbd88fbe652b6", Package.AUDIO)]:
-            output = DiscoverPackages()._get_type(Path(settings.BASE_STORAGE_DIR, refid))
+            output = discover_packages.Command()._get_type(Path(settings.BASE_STORAGE_DIR, refid))
             self.assertEqual(output, expected)
 
         with self.assertRaises(Exception):
-            DiscoverPackages()._get_type(Path("1234"))
+            discover_packages.Command()._get_type(Path("1234"))
 
     @mock_sts
     @mock_ssm
@@ -141,14 +141,13 @@ class DiscoverPackagesCronTests(TestCase):
         mock_init.return_value = None
         mock_package_data.return_value = "foo", "bar"
 
-        output = DiscoverPackages().do()
-        self.assertTrue(isinstance(output, str))
+        discover_packages.Command().handle()
         mock_init.assert_called_once()
         mock_message.assert_not_called()
         self.assertEqual(mock_package_data.call_count, expected_len)
         self.assertEqual(Package.objects.all().count(), expected_len)
 
-        output = DiscoverPackages().do()
+        discover_packages.Command().handle()
         mock_message.assert_called_once_with(
             settings.AWS['sns_topic'], None, 'No packages left to QC', 'COMPLETE')
 
@@ -157,18 +156,18 @@ class DiscoverPackagesCronTests(TestCase):
             shutil.rmtree(dir)
 
 
-class FetchRightsStatementsCronTests(TestCase):
+class FetchRightsStatementsCommandTests(TestCase):
 
     @patch('package_review.clients.AquilaClient.available_rights_statements')
     def test_do(self, mock_rights):
         """Asserts FetchRights cron only adds new rights statements."""
         rights_statements = [{"id": "1", "title": "foo"}, {"id": "2", "title": "bar"}]
         mock_rights.return_value = rights_statements
-        FetchRightsStatements().do()
+        fetch_rights_statements.Command().handle()
         mock_rights.assert_called_once_with()
         self.assertEqual(RightsStatement.objects.all().count(), len(rights_statements))
 
-        FetchRightsStatements().do()
+        fetch_rights_statements.Command().handle()
         self.assertEqual(RightsStatement.objects.all().count(), len(rights_statements))
 
 
