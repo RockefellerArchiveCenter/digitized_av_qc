@@ -36,7 +36,7 @@ class ArchivesSpaceClient(ASpace):
         results = self.client.get(f"/repositories/{self.repository}/find_by_id/archival_objects?ref_id[]={refid}&resolve[]=archival_objects").json()
         try:
             if len(results['archival_objects']) != 1:
-                raise Exception(f'Expecting to get only one result for ref id {refid} but got {len(results["archival_objects"])} instead.')
+                raise Exception(f'Expecting to get one result for ref id {refid} but got {len(results["archival_objects"])} instead.')
             object = results['archival_objects'][0]['_resolved']
             av_number = self.get_av_number(object['instances'])
 
