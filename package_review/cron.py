@@ -45,7 +45,7 @@ class DiscoverPackages(CronJobBase):
                 baseurl=configuration.get('AS_BASEURL'),
                 username=configuration.get('AS_USERNAME'),
                 password=configuration.get('AS_PASSWORD'),
-                repository=configuration.get('repository'))
+                repository=configuration.get('AS_REPO'))
             for package_path in settings.BASE_STORAGE_DIR.iterdir():
                 refid = package_path.stem
                 if not Package.objects.filter(refid=refid, process_status__in=[Package.PENDING, Package.APPROVED]).exists():
