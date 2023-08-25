@@ -65,7 +65,7 @@ class Command(BaseCommand):
                         settings.AWS['role_arn'])
                     sns_client.deliver_message(
                         settings.AWS['sns_topic'],
-                        refid,
+                        None,
                         f'Error discovering refid {refid}: {exception}',
                         'FAILURE')
                     continue
