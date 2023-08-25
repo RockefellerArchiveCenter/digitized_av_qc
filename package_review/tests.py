@@ -12,7 +12,8 @@ from moto import mock_sns, mock_sqs, mock_ssm, mock_sts
 from moto.core import DEFAULT_ACCOUNT_ID
 
 from .clients import ArchivesSpaceClient, AWSClient
-from .management.commands import discover_packages, fetch_rights_statements
+from .management.commands import (check_qc_status, discover_packages,
+                                  fetch_rights_statements)
 from .models import Package, RightsStatement
 
 FIXTURE_DIR = "fixtures"
@@ -148,8 +149,7 @@ class DiscoverPackagesCommandTests(TestCase):
         self.assertEqual(Package.objects.all().count(), expected_len)
 
         discover_packages.Command().handle()
-        mock_message.assert_called_once_with(
-            settings.AWS['sns_topic'], None, 'No packages left to QC', 'COMPLETE')
+        mock_message.assert_not_called()
 
     @mock_sns
     @mock_sts
@@ -163,7 +163,37 @@ class DiscoverPackagesCommandTests(TestCase):
         mock_package_data.side_effect = Exception("foo")
         mock_init.return_value = None
         discover_packages.Command().handle()
-        self.assertEqual(mock_message.call_count, expected_len + 1)
+        self.assertEqual(mock_message.call_count, expected_len)
+
+    def tearDown(self):
+        for dir in Path(settings.BASE_STORAGE_DIR).iterdir():
+            shutil.rmtree(dir)
+
+
+class CheckQCStatusCommandTests(TestCase):
+
+    @mock_sns
+    @mock_sts
+    @mock_ssm
+    @patch('package_review.clients.AWSClient.deliver_message')
+    def test_qc_done(self, mock_message):
+        for dir in Path(settings.BASE_STORAGE_DIR).iterdir():
+            shutil.rmtree(dir)
+        check_qc_status.Command().handle()
+        mock_message.assert_called_once_with(
+            settings.AWS['sns_topic'],
+            None,
+            'No packages left to QC',
+            'COMPLETE')
+
+    @mock_sns
+    @mock_sts
+    @mock_ssm
+    @patch('package_review.clients.AWSClient.deliver_message')
+    def test_no_message(self, mock_message):
+        copy_binaries()
+        check_qc_status.Command().handle()
+        mock_message.assert_not_called()
 
     def tearDown(self):
         for dir in Path(settings.BASE_STORAGE_DIR).iterdir():

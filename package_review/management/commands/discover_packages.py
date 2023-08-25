@@ -9,7 +9,7 @@ from package_review.models import Package
 
 
 class Command(BaseCommand):
-    help = "Fetches rights statements from Aquila"
+    help = "Discovers new packages to be QCed."
 
     def _get_type(self, root_path):
         refid = root_path.stem
@@ -28,12 +28,7 @@ class Command(BaseCommand):
             settings.AWS['secret_access_key'],
             settings.AWS['region'],
             settings.AWS['role_arn']).client
-        sns_client = AWSClient(
-            'sns',
-            settings.AWS['access_key_id'],
-            settings.AWS['secret_access_key'],
-            settings.AWS['region'],
-            settings.AWS['role_arn'])
+
         configuration = {}
         param_details = ssm_client.get_parameters_by_path(
             Path=f"/{environ.get('ENV')}/{environ.get('APP_CONFIG_PATH')}",
@@ -62,6 +57,12 @@ class Command(BaseCommand):
                     created_list.append(refid)
                 except Exception as e:
                     exception = "\n".join(traceback.format_exception(e))
+                    sns_client = AWSClient(
+                        'sns',
+                        settings.AWS['access_key_id'],
+                        settings.AWS['secret_access_key'],
+                        settings.AWS['region'],
+                        settings.AWS['role_arn'])
                     sns_client.deliver_message(
                         settings.AWS['sns_topic'],
                         refid,
@@ -69,14 +70,5 @@ class Command(BaseCommand):
                         'FAILURE')
                     continue
 
-        if len(created_list):
-            message = f'Packages created: {", ".join(created_list)}'
-        else:
-            sns_client.deliver_message(
-                settings.AWS['sns_topic'],
-                None,
-                'No packages left to QC',
-                'COMPLETE')
-            message = 'No new packages to discover.'
-
+        message = f'Packages created: {", ".join(created_list)}' if len(created_list) else 'No new packages to discover.'
         self.stdout.write(self.style.SUCCESS(message))
