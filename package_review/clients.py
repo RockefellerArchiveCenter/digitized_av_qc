@@ -87,7 +87,7 @@ class AWSClient(object):
         attributes = {
             'service': {
                 'DataType': 'String',
-                'StringValue': 'qc',
+                'StringValue': 'digitized_av_qc',
             },
             'outcome': {
                 'DataType': 'String',
