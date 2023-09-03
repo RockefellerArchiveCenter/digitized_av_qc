@@ -24,9 +24,6 @@ class Command(BaseCommand):
         created_list = []
         ssm_client = AWSClient(
             'ssm',
-            settings.AWS['access_key_id'],
-            settings.AWS['secret_access_key'],
-            settings.AWS['region'],
             settings.AWS['role_arn']).client
 
         configuration = {}
@@ -59,9 +56,6 @@ class Command(BaseCommand):
                     exception = "\n".join(traceback.format_exception(e))
                     sns_client = AWSClient(
                         'sns',
-                        settings.AWS['access_key_id'],
-                        settings.AWS['secret_access_key'],
-                        settings.AWS['region'],
                         settings.AWS['role_arn'])
                     sns_client.deliver_message(
                         settings.AWS['sns_topic'],

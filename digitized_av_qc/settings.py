@@ -141,9 +141,6 @@ AQUILA = {
 }
 
 AWS = {
-    'access_key_id': getenv('AWS_ACCESS_KEY_ID'),
-    'secret_access_key': getenv('AWS_SECRET_ACCESS_KEY'),
     'role_arn': getenv('AWS_ROLE_ARN'),
-    'region': getenv('AWS_REGION'),
     'sns_topic': getenv('AWS_SNS_TOPIC')
 }

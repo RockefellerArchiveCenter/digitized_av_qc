@@ -1,7 +1,6 @@
-from datetime import datetime
-
 import boto3
 from asnake.aspace import ASpace
+from aws_assume_role_lib import assume_role
 from requests import Session
 
 
@@ -62,25 +61,15 @@ class AquilaClient(object):
 
 class AWSClient(object):
 
-    def __init__(self, resource, access_key_id, secret_access_key, region, role_arn):
+    def __init__(self, resource, role_arn):
         """Gets Boto3 client which authenticates with a specific IAM role."""
-        now = datetime.now()
-        timestamp = now.timestamp()
-        sts = boto3.client(
-            'sts',
-            aws_access_key_id=access_key_id,
-            aws_secret_access_key=secret_access_key,
-            region_name=region)
-        role = sts.assume_role(
-            RoleArn=role_arn,
-            RoleSessionName=f'digitized-av-qc-{timestamp}')
-        credentials = role['Credentials']
-        self.client = boto3.client(
-            resource,
-            region_name=region,
-            aws_access_key_id=credentials['AccessKeyId'],
-            aws_secret_access_key=credentials['SecretAccessKey'],
-            aws_session_token=credentials['SessionToken'],)
+        self.client = self.get_client_with_role(resource, role_arn)
+
+    def get_client_with_role(self, resource, role_arn):
+        """Gets Boto3 client which authenticates with a specific IAM role."""
+        session = boto3.Session()
+        assumed_role_session = assume_role(session, role_arn)
+        return assumed_role_session.client(resource)
 
     def deliver_message(self, sns_topic, package, message, outcome, rights_ids=None):
         """Delivers message to SNS Topic."""

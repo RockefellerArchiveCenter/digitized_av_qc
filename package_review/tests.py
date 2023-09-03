@@ -80,24 +80,19 @@ class AWSClientTests(TestCase):
     @mock_sns
     @mock_sqs
     @mock_sts
-    def test_deliver_message(self):
+    @patch('package_review.clients.AWSClient.get_client_with_role')
+    def test_deliver_message(self, mock_client):
         sns = boto3.client('sns', region_name='us-east-1')
+        mock_client.return_value = sns
         topic_arn = sns.create_topic(Name='my-topic')['TopicArn']
         sqs_conn = boto3.resource("sqs", region_name="us-east-1")
         sqs_conn.create_queue(QueueName="test-queue")
         sns.subscribe(
             TopicArn=topic_arn,
             Protocol="sqs",
-            Endpoint=f"arn:aws:sqs:us-east-1:{DEFAULT_ACCOUNT_ID}:test-queue",
-        )
+            Endpoint=f"arn:aws:sqs:us-east-1:{DEFAULT_ACCOUNT_ID}:test-queue")
 
-        client = AWSClient(
-            'sns',
-            settings.AWS['access_key_id'],
-            settings.AWS['secret_access_key'],
-            settings.AWS['region'],
-            settings.AWS['role_arn']
-        )
+        client = AWSClient('sns', settings.AWS['role_arn'])
 
         package = random.choice(Package.objects.all())
 
@@ -136,7 +131,8 @@ class DiscoverPackagesCommandTests(TestCase):
     @patch('package_review.clients.ArchivesSpaceClient.__init__')
     @patch('package_review.clients.ArchivesSpaceClient.get_package_data')
     @patch('package_review.clients.AWSClient.deliver_message')
-    def test_handle(self, mock_message, mock_package_data, mock_init):
+    @patch('package_review.clients.AWSClient.get_client_with_role')
+    def test_handle(self, mock_client, mock_message, mock_package_data, mock_init):
         """Asserts cron produces expected results."""
         expected_len = len(list(Path(settings.BASE_STORAGE_DIR).iterdir()))
         mock_init.return_value = None
@@ -144,6 +140,7 @@ class DiscoverPackagesCommandTests(TestCase):
 
         discover_packages.Command().handle()
         mock_init.assert_called_once()
+        mock_client.assert_called_once()
         mock_message.assert_not_called()
         self.assertEqual(mock_package_data.call_count, expected_len)
         self.assertEqual(Package.objects.all().count(), expected_len)
@@ -157,7 +154,8 @@ class DiscoverPackagesCommandTests(TestCase):
     @patch('package_review.clients.ArchivesSpaceClient.__init__')
     @patch('package_review.clients.ArchivesSpaceClient.get_package_data')
     @patch('package_review.clients.AWSClient.deliver_message')
-    def test_handle_exception(self, mock_message, mock_package_data, mock_init):
+    @patch('package_review.clients.AWSClient.get_client_with_role')
+    def test_handle_exception(self, mock_client, mock_message, mock_package_data, mock_init):
         """Asserts exceptions while processing packages are handled as expected."""
         expected_len = len(list(Path(settings.BASE_STORAGE_DIR).iterdir()))
         mock_package_data.side_effect = Exception("foo")
@@ -176,7 +174,8 @@ class CheckQCStatusCommandTests(TestCase):
     @mock_sts
     @mock_ssm
     @patch('package_review.clients.AWSClient.deliver_message')
-    def test_qc_done(self, mock_message):
+    @patch('package_review.clients.AWSClient.get_client_with_role')
+    def test_qc_done(self, mock_client, mock_message):
         for dir in Path(settings.BASE_STORAGE_DIR).iterdir():
             shutil.rmtree(dir)
         check_qc_status.Command().handle()
@@ -190,7 +189,8 @@ class CheckQCStatusCommandTests(TestCase):
     @mock_sts
     @mock_ssm
     @patch('package_review.clients.AWSClient.deliver_message')
-    def test_no_message(self, mock_message):
+    @patch('package_review.clients.AWSClient.get_client_with_role')
+    def test_no_message(self, mock_client, mock_message):
         copy_binaries()
         check_qc_status.Command().handle()
         mock_message.assert_not_called()

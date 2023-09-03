@@ -1,3 +1,4 @@
+aws-assume-role-lib~=2.10
 ArchivesSnake~=0.9
 boto3~=1.28
 Django~=4.2

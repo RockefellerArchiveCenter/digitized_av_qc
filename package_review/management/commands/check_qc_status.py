@@ -12,15 +12,9 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         ssm_client = AWSClient(
             'ssm',
-            settings.AWS['access_key_id'],
-            settings.AWS['secret_access_key'],
-            settings.AWS['region'],
             settings.AWS['role_arn']).client
         sns_client = AWSClient(
             'sns',
-            settings.AWS['access_key_id'],
-            settings.AWS['secret_access_key'],
-            settings.AWS['region'],
             settings.AWS['role_arn'])
 
         configuration = {}
