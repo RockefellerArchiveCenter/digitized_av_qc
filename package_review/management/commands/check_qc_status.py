@@ -10,12 +10,8 @@ class Command(BaseCommand):
     help = "Sends a messaage if QC is complete"
 
     def handle(self, *args, **options):
-        ssm_client = AWSClient(
-            'ssm',
-            settings.AWS['role_arn']).client
-        sns_client = AWSClient(
-            'sns',
-            settings.AWS['role_arn'])
+        ssm_client = AWSClient('ssm', settings.AWS['role_arn']).client
+        sns_client = AWSClient('sns', settings.AWS['role_arn'])
 
         configuration = {}
         param_details = ssm_client.get_parameters_by_path(

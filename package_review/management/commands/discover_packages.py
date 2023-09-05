@@ -13,18 +13,16 @@ class Command(BaseCommand):
 
     def _get_type(self, root_path):
         refid = root_path.stem
-        if (root_path / f'{refid}_a.mp3').exists():
+        if (root_path / f'{refid}.mp3').exists():
             return Package.AUDIO
-        elif (root_path / f'{refid}_a.mp4').exists():
+        elif (root_path / f'{refid}.mp4').exists():
             return Package.VIDEO
         else:
             raise Exception(f'Unable to determine type of package {refid}')
 
     def handle(self, *args, **options):
         created_list = []
-        ssm_client = AWSClient(
-            'ssm',
-            settings.AWS['role_arn']).client
+        ssm_client = AWSClient('ssm', settings.AWS['role_arn']).client
 
         configuration = {}
         param_details = ssm_client.get_parameters_by_path(
@@ -54,9 +52,7 @@ class Command(BaseCommand):
                     created_list.append(refid)
                 except Exception as e:
                     exception = "\n".join(traceback.format_exception(e))
-                    sns_client = AWSClient(
-                        'sns',
-                        settings.AWS['role_arn'])
+                    sns_client = AWSClient('sns', settings.AWS['role_arn'])
                     sns_client.deliver_message(
                         settings.AWS['sns_topic'],
                         None,
