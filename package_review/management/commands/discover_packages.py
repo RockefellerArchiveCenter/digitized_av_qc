@@ -1,3 +1,4 @@
+import subprocess
 import traceback
 from os import environ
 
@@ -19,6 +20,27 @@ class Command(BaseCommand):
             return Package.VIDEO
         else:
             raise Exception(f'Unable to determine type of package {refid}')
+
+    def _get_duration(self, filepaths):
+        duration = 0.0
+        for fp in filepaths:
+            process = subprocess.Popen(
+                ['ffprobe',
+                 '-v',
+                 'error',
+                 '-show_entries',
+                 'format=duration',
+                 '-of',
+                 'default=noprint_wrappers=1:nokey=1',
+                 fp],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE)
+            out, _ = process.communicate()
+            duration += float(out.decode())
+        return duration
+
+    def _has_multiple_masters(self, master_files):
+        return bool(len(master_files > 1))
 
     def handle(self, *args, **options):
         created_list = []
@@ -43,11 +65,16 @@ class Command(BaseCommand):
             if not Package.objects.filter(refid=refid, process_status__in=[Package.PENDING, Package.APPROVED]).exists():
                 try:
                     title, av_number = client.get_package_data(refid)
+                    package_type = self._get_type(package_path)
+                    access_suffix, master_suffix = ('.mp3', '.wav') if package_type == 'audio' else ('.mp4', '.mkv')
                     Package.objects.create(
                         title=title,
                         av_number=av_number,
+                        duration_access=self._get_duration(package_path.glob(access_suffix)),
+                        duration_master=self._get_duration(package_path.glob(master_suffix)),
+                        multiple_masters=self._has_multiple_masters(package_path.glob(master_suffix)),
                         refid=refid,
-                        type=self._get_type(package_path),
+                        type=package_type,
                         process_status=Package.PENDING)
                     created_list.append(refid)
                 except Exception as e:
