@@ -6,7 +6,6 @@
 
 {% block content %}
 <p>{{object.refid}}</p>
-<p>QC Status: <span class="label">{{object.get_process_status_display}}</span></p>
 <h2>{{object.title}}</h2>
 {% if object.type == object.AUDIO %}
 <audio controls>
@@ -18,6 +17,11 @@
     <source src="{{MEDIA_URL}}/{{object.refid}}/{{object.refid}}.mp4" type="video/mp4">
     Your browser does not support the video tag.
 </video>
+{% endif %}
+
+{% if object.multiple_masters %}
+<p>Access file duration: {{object.duration_access}} seconds</p>
+<p>Master file duration: {{object.duration_master}} seconds</p>
 {% endif %}
 
 <h2>Assign Rights</h2>
