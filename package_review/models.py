@@ -19,6 +19,9 @@ class Package(models.Model):
 
     title = models.CharField(max_length=255)
     av_number = models.CharField(max_length=255)
+    duration_access = models.FloatField()
+    duration_master = models.FloatField()
+    multiple_masters = models.BooleanField()
     refid = models.CharField(max_length=32)
     type = models.IntegerField(choices=TYPE_CHOICES)
     process_status = models.IntegerField(choices=PROCESS_STATUS_CHOICES)
