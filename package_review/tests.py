@@ -18,8 +18,8 @@ from .models import Package, RightsStatement
 
 FIXTURE_DIR = "fixtures"
 RIGHTS_DATA = [("1", "foo"), ("2", "bar")]
-PACKAGE_DATA = [("foo", "av 123", "9ba10e5461d401517b0e1a53d514ec87", Package.AUDIO),
-                ("bar", "av 321", "f7d3dd6dc9c4732fa17dbd88fbe652b6", Package.VIDEO)]
+PACKAGE_DATA = [("foo", "av 123", 123.45, 123.45, False, "9ba10e5461d401517b0e1a53d514ec87", Package.AUDIO),
+                ("bar", "av 321", 543.21, 543.21, True, "f7d3dd6dc9c4732fa17dbd88fbe652b6", Package.VIDEO)]
 
 
 def create_rights_statements():
@@ -30,10 +30,13 @@ def create_rights_statements():
 
 
 def create_packages():
-    for title, av_number, refid, type in PACKAGE_DATA:
+    for title, av_number, duration_access, duration_master, multiple_masters, refid, type in PACKAGE_DATA:
         Package.objects.create(
             title=title,
             av_number=av_number,
+            duration_access=duration_access,
+            duration_master=duration_master,
+            multiple_masters=multiple_masters,
             refid=refid,
             type=type,
             process_status=Package.PENDING)
@@ -126,16 +129,25 @@ class DiscoverPackagesCommandTests(TestCase):
         with self.assertRaises(Exception):
             discover_packages.Command()._get_type(Path("1234"))
 
+    def test_get_duration(self):
+        for (filename, expected) in [("9ba10e5461d401517b0e1a53d514ec87.mp4", 5.759), ("f7d3dd6dc9c4732fa17dbd88fbe652b6.mp3", 27.252)]:
+            output = discover_packages.Command()._get_duration([Path(settings.BASE_STORAGE_DIR, filename.split('.')[0], filename)])
+            self.assertEqual(output, expected)
+
     @mock_sts
     @mock_ssm
     @patch('package_review.clients.ArchivesSpaceClient.__init__')
+    @patch('package_review.management.commands.discover_packages.Command._get_duration')
+    @patch('package_review.management.commands.discover_packages.Command._has_multiple_masters')
     @patch('package_review.clients.ArchivesSpaceClient.get_package_data')
     @patch('package_review.clients.AWSClient.deliver_message')
     @patch('package_review.clients.AWSClient.get_client_with_role')
-    def test_handle(self, mock_client, mock_message, mock_package_data, mock_init):
+    def test_handle(self, mock_client, mock_message, mock_package_data, mock_masters, mock_duration, mock_init):
         """Asserts cron produces expected results."""
         expected_len = len(list(Path(settings.BASE_STORAGE_DIR).iterdir()))
         mock_init.return_value = None
+        mock_masters.return_value = False
+        mock_duration.return_value = 123.45
         mock_package_data.return_value = "foo", "bar"
 
         discover_packages.Command().handle()
@@ -144,6 +156,10 @@ class DiscoverPackagesCommandTests(TestCase):
         mock_message.assert_not_called()
         self.assertEqual(mock_package_data.call_count, expected_len)
         self.assertEqual(Package.objects.all().count(), expected_len)
+        for package in Package.objects.all():
+            self.assertEqual(package.multiple_masters, False)
+            self.assertEqual(package.duration_access, 123.45)
+            self.assertEqual(package.duration_master, 123.45)
 
         discover_packages.Command().handle()
         mock_message.assert_not_called()
