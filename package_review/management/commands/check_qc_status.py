@@ -10,6 +10,9 @@ class Command(BaseCommand):
     help = "Sends a messaage if QC is complete"
 
     def handle(self, *args, **options):
+        if not settings.BASE_STORAGE_DIR.is_dir():
+            self.stdout.write(self.style.ERROR(f'Root directory {str(settings.BASE_STORAGE_DIR)} for files waiting to be QCed does not exist.'))
+            exit()
         ssm_client = AWSClient('ssm', settings.AWS['role_arn']).client
         sns_client = AWSClient('sns', settings.AWS['role_arn'])
 
