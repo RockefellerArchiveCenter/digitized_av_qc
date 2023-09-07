@@ -43,6 +43,9 @@ class Command(BaseCommand):
         return bool(len(master_files > 1))
 
     def handle(self, *args, **options):
+        if not settings.BASE_STORAGE_DIR.is_dir():
+            self.stdout.write(self.style.ERROR(f'Root directory {str(settings.BASE_STORAGE_DIR)} for files waiting to be QCed does not exist.'))
+            exit()
         created_list = []
         ssm_client = AWSClient('ssm', settings.AWS['role_arn']).client
 
