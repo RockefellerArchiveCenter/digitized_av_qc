@@ -40,7 +40,7 @@ class Command(BaseCommand):
         return duration
 
     def _has_multiple_masters(self, master_files):
-        return bool(len(master_files > 1))
+        return bool(len(master_files) > 1)
 
     def handle(self, *args, **options):
         if not settings.BASE_STORAGE_DIR.is_dir():
