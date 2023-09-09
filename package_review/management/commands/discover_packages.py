@@ -1,12 +1,17 @@
+import logging
 import subprocess
 import traceback
-from os import environ
+from os import getenv
 
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from package_review.clients import ArchivesSpaceClient, AWSClient
 from package_review.models import Package
+
+logging.basicConfig(
+    level=int(getenv('LOGGING_LEVEL', logging.INFO)),
+    format='%(filename)s::%(funcName)s::%(lineno)s %(message)s')
 
 
 class Command(BaseCommand):
@@ -51,7 +56,7 @@ class Command(BaseCommand):
 
         configuration = {}
         param_details = ssm_client.get_parameters_by_path(
-            Path=f"/{environ.get('ENV')}/{environ.get('APP_CONFIG_PATH')}",
+            Path=f"/{getenv('ENV')}/{getenv('APP_CONFIG_PATH')}",
             Recursive=False,
             WithDecryption=True)
         for param in param_details.get('Parameters', []):
@@ -81,6 +86,7 @@ class Command(BaseCommand):
                         process_status=Package.PENDING)
                     created_list.append(refid)
                 except Exception as e:
+                    logging.exception(e)
                     exception = "\n".join(traceback.format_exception(e))
                     sns_client = AWSClient('sns', settings.AWS['role_arn'])
                     sns_client.deliver_message(
