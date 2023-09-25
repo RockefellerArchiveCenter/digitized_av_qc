@@ -37,12 +37,12 @@ before_deploy:
 deploy:
   - provider: script
     script: >-
-      bash deploy_scripts/containers/push_image_to_ecr.sh $APPLICATION_NAME &&
+      bash deploy_scripts/containers/push_image_to_ecr.sh $APPLICATION_NAME
     on:
       branch: development
   - provider: script
     script: >-
-      bash deploy_scripts/containers/add_tag_to_image.sh $APPLICATION_NAME dev prod &&
+      bash deploy_scripts/containers/add_tag_to_image.sh $APPLICATION_NAME dev prod
     on:
       branch: base
 
