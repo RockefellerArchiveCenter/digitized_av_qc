@@ -74,7 +74,7 @@ class Command(BaseCommand):
                 try:
                     title, av_number = client.get_package_data(refid)
                     package_type = self._get_type(package_path)
-                    access_suffix, master_suffix = ('*.mp3', '*.wav') if package_type == 'audio' else ('*.mp4', '*.mkv')
+                    access_suffix, master_suffix = ('*.mp3', '*.wav') if package_type == Package.AUDIO else ('*.mp4', '*.mkv')
                     Package.objects.create(
                         title=title,
                         av_number=av_number,
