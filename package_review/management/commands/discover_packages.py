@@ -70,10 +70,11 @@ class Command(BaseCommand):
             repository=configuration.get('AS_REPO'))
         for package_path in settings.BASE_STORAGE_DIR.iterdir():
             refid = package_path.stem
-            if not Package.objects.filter(refid=refid, process_status__in=[Package.PENDING, Package.APPROVED]).exists():
+            if not Package.objects.filter(refid=refid, process_status=Package.PENDING).exists():
                 try:
                     title, av_number = client.get_package_data(refid)
                     package_type = self._get_type(package_path)
+                    possible_duplicate = Package.objects.filter(refid=refid, process_status=Package.APPROVED).exists()
                     access_suffix, master_suffix = ('*.mp3', '*.wav') if package_type == Package.AUDIO else ('*.mp4', '*.mkv')
                     Package.objects.create(
                         title=title,
@@ -81,6 +82,7 @@ class Command(BaseCommand):
                         duration_access=self._get_duration(package_path.glob(access_suffix)),
                         duration_master=self._get_duration(package_path.glob(master_suffix)),
                         multiple_masters=self._has_multiple_masters(package_path.glob(master_suffix)),
+                        possible_duplicate=possible_duplicate,
                         refid=refid,
                         type=package_type,
                         process_status=Package.PENDING)
