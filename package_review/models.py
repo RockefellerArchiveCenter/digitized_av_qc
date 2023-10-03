@@ -22,6 +22,7 @@ class Package(models.Model):
     duration_access = models.FloatField()
     duration_master = models.FloatField()
     multiple_masters = models.BooleanField()
+    possible_duplicate = models.BooleanField(default=False)
     refid = models.CharField(max_length=32)
     type = models.IntegerField(choices=TYPE_CHOICES)
     process_status = models.IntegerField(choices=PROCESS_STATUS_CHOICES)
