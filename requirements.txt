@@ -14,12 +14,12 @@ aws-assume-role-lib==2.10.0
     # via -r requirements.in
 boltons==23.0.0
     # via archivessnake
-boto3==1.28.57
+boto3==1.28.58
     # via
     #   -r requirements.in
     #   aws-assume-role-lib
     #   moto
-botocore==1.31.57
+botocore==1.31.58
     # via
     #   boto3
     #   moto
@@ -33,13 +33,6 @@ charset-normalizer==3.3.0
 cryptography==41.0.4
     # via moto
 django==4.2.5
-    # via
-    #   -r requirements.in
-    #   django-common-helpers
-    #   django4-cron
-django-common-helpers==0.9.2
-    # via django4-cron
-django4-cron==0.5.1
     # via -r requirements.in
 idna==3.4
     # via requests
@@ -57,7 +50,7 @@ more-itertools==10.1.0
     # via archivessnake
 moto==4.2.5
     # via -r requirements.in
-psycopg2==2.9.8
+psycopg2==2.9.9
     # via -r requirements.in
 pycparser==2.21
     # via cffi
@@ -90,7 +83,7 @@ types-pyyaml==6.0.12.12
     # via responses
 typing-extensions==4.8.0
     # via asgiref
-urllib3==1.26.16
+urllib3==1.26.17
     # via
     #   botocore
     #   requests
