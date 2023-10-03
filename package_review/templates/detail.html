@@ -7,6 +7,9 @@
 {% block content %}
 <p>ArchivesSpace Ref ID: {{object.refid}}</p>
 <h2>{{object.title}}</h2>
+{% if object.possible_duplicate  %}
+<p class="text--orange">This package may have already been processed through this pipeline.</p>
+{% endif %}
 {% if object.type == object.AUDIO %}
 <audio controls preload="auto" autobuffer>
     <source src="{{MEDIA_URL}}/{{object.refid}}/{{object.refid}}.mp3" type="audio/mpeg">
