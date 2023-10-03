@@ -10,11 +10,14 @@ asgiref==3.7.2
     # via django
 attrs==23.1.0
     # via archivessnake
+aws-assume-role-lib==2.10.0
+    # via -r requirements.in
 boltons==23.0.0
     # via archivessnake
 boto3==1.28.57
     # via
     #   -r requirements.in
+    #   aws-assume-role-lib
     #   moto
 botocore==1.31.57
     # via

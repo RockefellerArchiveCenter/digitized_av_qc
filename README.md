@@ -15,7 +15,7 @@ Start the app with Docker Compose:
 
     $ docker compose up
 
-Once the application starts successfully, you should be able to access it in your browser at `http://localhost:8080`
+Once the application starts successfully, you should be able to access it in your browser at `http://localhost`
 
 When you're done, shut down Docker Compose:
 
