@@ -56,7 +56,7 @@ class ArchivesSpaceClientTests(TestCase):
     @patch('asnake.aspace.ASpace.__init__')
     def setUp(self, mock_init):
         mock_init.return_value = None
-        self.client = ArchivesSpaceClient(
+        self.as_client = ArchivesSpaceClient(
             username='admin',
             password='admin',
             baseurl='https://archivesspace.org/api',
@@ -65,13 +65,13 @@ class ArchivesSpaceClientTests(TestCase):
     def test_init(self):
         """Asserts repository identifier is correctly set."""
         self.assertEqual(
-            self.client.repository,
+            self.as_client.repository,
             '2')
 
     def test_get_av_number(self):
         """Asserts AV number is parsed correctly."""
         instances = [{"sub_container": {"indicator_2": "AV 1234"}}, {"sub_container": {}}]
-        av_number = self.client.get_av_number(instances)
+        av_number = self.as_client.get_av_number(instances)
         self.assertEqual(av_number, "AV 1234")
 
 
@@ -148,7 +148,7 @@ class DiscoverPackagesCommandTests(TestCase):
         mock_init.return_value = None
         mock_masters.return_value = False
         mock_duration.return_value = 123.45
-        mock_package_data.return_value = "foo", "bar"
+        mock_package_data.return_value = 'object_title', 'av_number', 'object_uri', 'resource_title', 'resource_uri'
 
         discover_packages.Command().handle()
         mock_init.assert_called_once()
