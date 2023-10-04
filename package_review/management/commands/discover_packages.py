@@ -72,13 +72,16 @@ class Command(BaseCommand):
             refid = package_path.stem
             if not Package.objects.filter(refid=refid, process_status=Package.PENDING).exists():
                 try:
-                    title, av_number = client.get_package_data(refid)
+                    title, av_number, uri, resource_title, resource_uri = client.get_package_data(refid)
                     package_type = self._get_type(package_path)
                     possible_duplicate = Package.objects.filter(refid=refid, process_status=Package.APPROVED).exists()
                     access_suffix, master_suffix = ('*.mp3', '*.wav') if package_type == Package.AUDIO else ('*.mp4', '*.mkv')
                     Package.objects.create(
                         title=title,
                         av_number=av_number,
+                        uri=uri,
+                        resource_title=resource_title,
+                        resource_uri=resource_uri,
                         duration_access=self._get_duration(package_path.glob(access_suffix)),
                         duration_master=self._get_duration(package_path.glob(master_suffix)),
                         multiple_masters=self._has_multiple_masters(package_path.glob(master_suffix)),
