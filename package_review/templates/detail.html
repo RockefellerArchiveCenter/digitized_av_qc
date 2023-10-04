@@ -11,7 +11,7 @@
     Your browser does not support the audio tag.
 </audio>
 {% elif object.type == object.VIDEO %}
-<video width="320" height="240" controls>
+<video controls>
     <source src="{{MEDIA_URL}}/{{object.refid}}/{{object.refid}}.mp4" type="video/mp4">
     Your browser does not support the video tag.
 </video>

@@ -39,3 +39,8 @@ dd {
     display: inline;
     margin-left: 5px;
 }
+
+video {
+    width: 50%;
+    max-height: 100%;
+}
