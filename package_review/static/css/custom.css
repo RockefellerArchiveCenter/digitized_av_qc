@@ -20,3 +20,22 @@ form {
     right: 30%;
     top: 30%;
 }
+
+.list--unstyled {
+    margin-top: 0;
+}
+
+dt:before {
+    content: "";
+    display: block;
+}
+
+dt {
+    display: inline;
+    font-weight: bold;
+}
+
+dd {
+    display: inline;
+    margin-left: 5px;
+}

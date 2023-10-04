@@ -1,20 +1,15 @@
 {% extends 'base.html' %}
 
 {% block h1_title %}
-{{object.av_number}} Details
+{{object.title}}
 {% endblock %}
 
 {% block content %}
-<p>ArchivesSpace Ref ID: {{object.refid}}</p>
-<h2>{{object.title}}</h2>
-{% if object.possible_duplicate  %}
-<p class="text--orange">This package may have already been processed through this pipeline.</p>
-{% endif %}
 {% if object.type == object.AUDIO %}
 <audio controls preload="auto" autobuffer>
     <source src="{{MEDIA_URL}}/{{object.refid}}/{{object.refid}}.mp3" type="audio/mpeg">
     Your browser does not support the audio tag.
-  </audio>
+</audio>
 {% elif object.type == object.VIDEO %}
 <video width="320" height="240" controls>
     <source src="{{MEDIA_URL}}/{{object.refid}}/{{object.refid}}.mp4" type="video/mp4">
@@ -22,10 +17,20 @@
 </video>
 {% endif %}
 
-{% if object.multiple_masters %}
-<p>Access file duration: {{object.duration_access}} seconds</p>
-<p>Master file duration: {{object.duration_master}} seconds</p>
-{% endif %}
+<h2 class="mt-20 mb-0">Details</h2>
+<dl class="list--unstyled">
+  <dt>Ref ID:</dt>
+  <dd>{{object.refid}}</dd>
+  <dt>Collection:</dt>
+  <dd>{{object.resource_title}}</dd>
+  {% if object.multiple_masters %}
+  <dt>Access file duration:</dt><dd>{{object.duration_access}} seconds</dd>
+  <dt>Master file duration:</dt><dd>{{object.duration_master}} seconds</dd>
+  {% endif %}
+</dl>
+<a class="btn btn--sm btn--white mb-20" href="{{object.archivesspace_link}}">View in ArchivesSpace</a>
+
+
 
 <h2>Assign Rights</h2>
 {% for statement in rights_statements %}
@@ -41,6 +46,10 @@
 {% endfor %}
 
 <div id="error-message" class="input__error" style="display:none"></div>
+
+{% if object.possible_duplicate  %}
+<p class="text--orange">This package may have already been processed through this pipeline.</p>
+{% endif %}
 
 <div class="mt-20">
   <button id="approve-button" type="submit" class="btn btn--sm btn--blue">Approve Item</button>
