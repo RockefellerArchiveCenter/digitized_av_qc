@@ -7,12 +7,12 @@
 {% block content %}
 {% if object.type == object.AUDIO %}
 <audio controls preload="auto" autobuffer>
-    <source src="{{MEDIA_URL}}/{{object.refid}}/{{object.refid}}.mp3" type="audio/mpeg">
+    <source src="{{MEDIA_URL}}{{object.refid}}/{{object.refid}}.mp3" type="audio/mpeg">
     Your browser does not support the audio tag.
 </audio>
 {% elif object.type == object.VIDEO %}
 <video controls>
-    <source src="{{MEDIA_URL}}/{{object.refid}}/{{object.refid}}.mp4" type="video/mp4">
+    <source src="{{MEDIA_URL}}{{object.refid}}/{{object.refid}}.mp4" type="video/mp4">
     Your browser does not support the video tag.
 </video>
 {% endif %}
