@@ -96,3 +96,8 @@ video {
     width: 50%;
     max-height: 100%;
 }
+
+.audio--detail {
+    width: 50%;
+    min-width: 450px;
+}
