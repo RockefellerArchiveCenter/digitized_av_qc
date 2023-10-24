@@ -32,7 +32,7 @@
 
 
 
-<h2>Assign Rights</h2>
+<h2 class="mb-0">Assign Rights</h2>
 {% for statement in rights_statements %}
   <div class="input-group">
     <input
@@ -51,9 +51,9 @@
 <p class="text--orange">This package may have already been processed through this pipeline.</p>
 {% endif %}
 
-<div class="mt-20">
-  <button id="approve-button" type="submit" class="btn btn--sm btn--blue">Approve Item</button>
-  <button type="cancel" class="btn btn--sm btn--orange" data-micromodal-trigger="modal__reject-single">Reject Item</button>
+<div class="mt-50">
+  <button id="approve-button" type="submit" class="btn btn--lg btn--blue">Approve Item</button>
+  <button type="cancel" class="btn btn--lg btn--orange" data-micromodal-trigger="modal__reject-single">Reject Item</button>
 </div>
 {% endblock %}
 
