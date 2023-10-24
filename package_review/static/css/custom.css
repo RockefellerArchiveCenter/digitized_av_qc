@@ -1,3 +1,55 @@
+.table {
+    table-layout: fixed;
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table thead th:nth-child(1) {
+    width: 10%;
+}
+
+.table thead th:nth-child(2) {
+    width: 10%;
+}
+
+.table thead th:nth-child(3) {
+    width: auto;
+}
+
+.table thead th:nth-child(4) {
+    width: 15%;
+}
+
+.table thead th:nth-child(5) {
+    width: 15%;
+}
+
+.table thead th:nth-child(6) {
+    width: 15%;
+}
+
+.table thead th:nth-child(7) {
+    width: 15%;
+}
+
+.table th,
+td {
+    padding: 20px;
+}
+
+.table tbody tr:nth-child(odd) {
+    background-color: #e3e1dd;
+}
+  
+.table tbody tr:nth-child(even) {
+    background-color: #ffffff;
+}
+
+.table--package-list input[type=checkbox] {
+    width: unset;
+    margin-left: 10px;
+}  
+
 .modal__overlay {
     display: none;
 }
