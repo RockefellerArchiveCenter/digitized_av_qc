@@ -29,5 +29,5 @@ RUN a2enmod wsgi
 COPY crontab /etc/cron.d/crontab
 RUN crontab /etc/cron.d/crontab
 
-EXPOSE 80
+EXPOSE 443
 ENTRYPOINT [ "./entrypoint.prod.sh" ]
