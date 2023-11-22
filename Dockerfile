@@ -1,5 +1,5 @@
 FROM python:3.10-buster as base
-RUN apt-get update
+RUN apt-get clean && apt-get update
 RUN apt-get install --yes ffmpeg
 
 COPY requirements.txt /var/www/digitized-av-qc/requirements.txt
@@ -25,10 +25,9 @@ RUN a2ensite 000-digitized_av_qc.conf
 RUN a2enmod headers
 RUN a2enmod rewrite
 RUN a2enmod wsgi
-RUN a2enmod ssl
 
 COPY crontab /etc/cron.d/crontab
 RUN crontab /etc/cron.d/crontab
 
-EXPOSE 443
+EXPOSE 80
 ENTRYPOINT [ "./entrypoint.prod.sh" ]
