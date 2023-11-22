@@ -25,6 +25,7 @@ RUN a2ensite 000-digitized_av_qc.conf
 RUN a2enmod headers
 RUN a2enmod rewrite
 RUN a2enmod wsgi
+RUN a2enmod ssl
 
 COPY crontab /etc/cron.d/crontab
 RUN crontab /etc/cron.d/crontab
