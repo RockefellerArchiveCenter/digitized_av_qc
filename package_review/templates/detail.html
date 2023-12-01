@@ -17,22 +17,24 @@
 </video>
 {% endif %}
 
-<h2 class="mt-20 mb-0">Details</h2>
+<h2 class="mt-20 mb-0">Additional Description</h2>
 <dl class="list--unstyled">
   <dt>Ref ID:</dt>
   <dd>{{object.refid}}</dd>
   <dt>Collection:</dt>
   <dd>{{object.resource_title}}</dd>
-  {% if object.multiple_masters %}
-  <dt>Access file duration:</dt><dd>{{object.duration_access}} seconds</dd>
-  <dt>Master file duration:</dt><dd>{{object.duration_master}} seconds</dd>
-  {% endif %}
 </dl>
 <a class="btn btn--sm btn--white mb-20" href="{{object.archivesspace_link}}">View in ArchivesSpace</a>
 
+{% if object.multiple_masters %}
+<h2 class="mb-0">Derivative Details</h2>
+<dl class="list--unstyled">
+  <dt>Access file duration:</dt><dd>{{object.duration_access}} seconds</dd>
+  <dt>Master file duration:</dt><dd>{{object.duration_master}} seconds</dd>
+</dl>
+{% endif %}
 
-
-<h2 class="mb-0">Assign Rights</h2>
+<h2 class="mt-20 mb-0">Assign Rights</h2>
 {% for statement in rights_statements %}
   <div class="input-group">
     <input
