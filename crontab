@@ -1,0 +1,5 @@
+SHELL=/bin/bash
+BASH_ENV=/container.env
+*/5 * * * * /usr/local/bin/python3 -u /var/www/digitized-av-qc/manage.py discover_packages >/proc/1/fd/1 2>/proc/1/fd/2
+*/3 * * * * /usr/local/bin/python3 -u /var/www/digitized-av-qc/manage.py check_qc_status >/proc/1/fd/1 2>/proc/1/fd/2
+0 0 * * * /usr/local/bin/python3 -u /var/www/digitized-av-qc/manage.py fetch_rights_statements >/proc/1/fd/1 2>/proc/1/fd/2

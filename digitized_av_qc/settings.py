@@ -10,9 +10,8 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.2/ref/settings/
 """
 
+from os import getenv
 from pathlib import Path
-
-from digitized_av_qc import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -27,8 +26,7 @@ SECRET_KEY = "django-insecure-ngvj#^!4*^wjrtyslvq5gr0ku#0@qnyh$dw$rqb%$hv!-=aebw
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = getenv('ALLOWED_HOSTS').split(',')
 
 # Application definition
 
@@ -39,11 +37,11 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "django_cron",
     "package_review",
 ]
 
 MIDDLEWARE = [
+    "digitized_av_qc.middleware.HealthEndpointMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -80,12 +78,12 @@ WSGI_APPLICATION = "digitized_av_qc.wsgi.application"
 
 DATABASES = {
     "default": {
-        "ENGINE": config.SQL_ENGINE,
-        "NAME": config.SQL_DB_NAME,
-        "USER": config.SQL_DB_USER,
-        "PASSWORD": config.SQL_DB_PASSWORD,
-        "HOST": config.SQL_HOST,
-        "PORT": config.SQL_PORT,
+        "ENGINE": getenv('SQL_ENGINE'),
+        "NAME": getenv('SQL_DB_NAME'),
+        "USER": getenv('SQL_DB_USER'),
+        "PASSWORD": getenv('SQL_DB_PASSWORD'),
+        "HOST": getenv('SQL_HOST'),
+        "PORT": getenv('SQL_PORT'),
     }
 }
 
@@ -125,38 +123,24 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = "static/"
+STATIC_ROOT = "static/"
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-CRON_CLASSES = [
-    "package_review.cron.DiscoverPackages",
-    "package_review.cron.FetchRightsStatements",
-]
-
-BASE_STORAGE_DIR = BASE_DIR / config.STORAGE_PATH
-BASE_DESTINATION_DIR = BASE_DIR / config.DESTINATION_PATH
+BASE_STORAGE_DIR = BASE_DIR / getenv('STORAGE_PATH')
+BASE_DESTINATION_DIR = BASE_DIR / getenv('DESTINATION_PATH')
 
 MEDIA_ROOT = BASE_STORAGE_DIR
 MEDIA_URL = '/media/'
 
-ARCHIVESSPACE = {
-    'baseurl': config.AS_BASEURL,
-    'repository': config.AS_REPO,
-    'username': config.AS_USERNAME,
-    'password': config.AS_PASSWORD,
-}
-
 AQUILA = {
-    'baseurl': config.AQUILA_BASEURL
+    'baseurl': getenv('AQUILA_BASEURL')
 }
 
 AWS = {
-    'access_key_id': config.AWS_ACCESS_KEY_ID,
-    'secret_access_key': config.AWS_SECRET_ACCESS_KEY,
-    'role_arn': config.AWS_ROLE_ARN,
-    'region': config.AWS_REGION,
-    'sns_topic': config.AWS_SNS_TOPIC
+    'role_arn': getenv('AWS_ROLE_ARN'),
+    'sns_topic': getenv('AWS_SNS_TOPIC')
 }

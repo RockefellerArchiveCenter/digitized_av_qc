@@ -19,6 +19,9 @@ class Package(models.Model):
 
     title = models.CharField(max_length=255)
     av_number = models.CharField(max_length=255)
+    duration_access = models.FloatField()
+    duration_master = models.FloatField()
+    multiple_masters = models.BooleanField()
     refid = models.CharField(max_length=32)
     type = models.IntegerField(choices=TYPE_CHOICES)
     process_status = models.IntegerField(choices=PROCESS_STATUS_CHOICES)
@@ -26,6 +29,11 @@ class Package(models.Model):
 
     def __str__(self):
         return f'{self.av_number} {self.title}'
+
+    @property
+    def av_number_normalized(self):
+        """Returns a numeric representation of AV number."""
+        return self.av_number.split(' ')[-1]
 
 
 class RightsStatement(models.Model):
