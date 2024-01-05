@@ -1,5 +1,5 @@
 FROM python:3.10-buster as base
-RUN apt-get update
+RUN apt-get clean && apt-get update
 RUN apt-get install --yes ffmpeg
 
 COPY requirements.txt /var/www/digitized-av-qc/requirements.txt

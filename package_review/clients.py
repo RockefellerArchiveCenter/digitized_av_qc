@@ -30,16 +30,19 @@ class ArchivesSpaceClient(ASpace):
             refid (string): RefID for an ArchivesSpace archival object.
 
         Returns:
-            object title, av_number (tuple of strings): data about the object.
+            object_title, av_number, object_uri, resource_title, resource_uri (tuple of strings): data about the object.
         """
-        results = self.client.get(f"/repositories/{self.repository}/find_by_id/archival_objects?ref_id[]={refid}&resolve[]=archival_objects").json()
+        results = self.client.get(f"/repositories/{self.repository}/find_by_id/archival_objects?ref_id[]={refid}&resolve[]=archival_objects&resolve[]=archival_objects::resource").json()
         try:
             if len(results['archival_objects']) != 1:
                 raise Exception(f'Expecting to get one result for ref id {refid} but got {len(results["archival_objects"])} instead.')
             object = results['archival_objects'][0]['_resolved']
             av_number = self.get_av_number(object['instances'])
-
-            return object['display_string'], av_number
+            object_uri = object['uri']
+            resource = object['resource']['_resolved']
+            resource_title = resource['title']
+            resource_uri = resource['uri']
+            return object['display_string'], av_number, object_uri, resource_title, resource_uri
         except KeyError:
             raise Exception(f'Unable to fetch results for {refid}. Got results {results}')
 
