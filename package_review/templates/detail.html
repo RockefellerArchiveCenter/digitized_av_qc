@@ -34,6 +34,11 @@
 </dl>
 {% endif %}
 
+{% if object.tree %}
+<h2 class="mb-0">Package Structure</h2>
+<pre class="mt-0">{{object.tree}}</pre>
+{% endif %}
+
 <h2 class="mt-20 mb-0">Assign Rights</h2>
 {% for statement in rights_statements %}
   <div class="input-group">

@@ -14,25 +14,27 @@ aws-assume-role-lib==2.10.0
     # via -r requirements.in
 boltons==23.1.1
     # via archivessnake
-boto3==1.34.32
+boto3==1.34.63
     # via
     #   -r requirements.in
     #   aws-assume-role-lib
     #   moto
-botocore==1.34.32
+botocore==1.34.63
     # via
     #   boto3
     #   moto
     #   s3transfer
-certifi==2023.11.17
+certifi==2024.2.2
     # via requests
 cffi==1.16.0
     # via cryptography
 charset-normalizer==3.3.2
     # via requests
-cryptography==42.0.2
+cryptography==42.0.5
     # via moto
-django==4.2.9
+directory-tree==0.0.4
+    # via -r requirements.in
+django==4.2.11
     # via -r requirements.in
 idna==3.6
     # via requests
@@ -42,7 +44,7 @@ jmespath==1.0.1
     # via
     #   boto3
     #   botocore
-markupsafe==2.1.4
+markupsafe==2.1.5
     # via
     #   jinja2
     #   werkzeug
@@ -54,7 +56,7 @@ psycopg2==2.9.9
     # via -r requirements.in
 pycparser==2.21
     # via cffi
-python-dateutil==2.8.2
+python-dateutil==2.9.0.post0
     # via
     #   botocore
     #   moto
@@ -62,16 +64,16 @@ pyyaml==6.0.1
     # via
     #   archivessnake
     #   responses
-rapidfuzz==3.6.1
+rapidfuzz==3.6.2
     # via archivessnake
 requests==2.31.0
     # via
     #   archivessnake
     #   moto
     #   responses
-responses==0.24.1
+responses==0.25.0
     # via moto
-s3transfer==0.10.0
+s3transfer==0.10.1
     # via boto3
 six==1.16.0
     # via python-dateutil
@@ -79,9 +81,9 @@ sqlparse==0.4.4
     # via django
 structlog==24.1.0
     # via archivessnake
-typing-extensions==4.9.0
+typing-extensions==4.10.0
     # via asgiref
-urllib3==2.0.7
+urllib3==2.2.1
     # via
     #   botocore
     #   requests

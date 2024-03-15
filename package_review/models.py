@@ -27,6 +27,7 @@ class Package(models.Model):
     multiple_masters = models.BooleanField()
     possible_duplicate = models.BooleanField(default=False)
     refid = models.CharField(max_length=32)
+    tree = models.JSONField(null=True, blank=True)
     type = models.IntegerField(choices=TYPE_CHOICES)
     process_status = models.IntegerField(choices=PROCESS_STATUS_CHOICES)
     rights_ids = models.CharField(max_length=100, null=True, blank=True)
