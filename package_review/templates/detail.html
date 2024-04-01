@@ -1,26 +1,45 @@
 {% extends 'base.html' %}
 
 {% block h1_title %}
-{{object.av_number}} Details
+{{object.title}} ({{object.av_number}})
 {% endblock %}
 
 {% block content %}
-<p>{{object.refid}}</p>
-<p>QC Status: <span class="label">{{object.get_process_status_display}}</span></p>
-<h2>{{object.title}}</h2>
 {% if object.type == object.AUDIO %}
-<audio controls>
-    <source src="{{MEDIA_URL}}/{{object.refid}}/{{object.refid}}_a.mp3" type="audio/mpeg">
+<audio class="audio--detail" controls preload="auto" autobuffer>
+    <source src="{{MEDIA_URL}}{{object.refid}}/{{object.refid}}.mp3" type="audio/mpeg">
     Your browser does not support the audio tag.
-  </audio>
+</audio>
 {% elif object.type == object.VIDEO %}
-<video width="320" height="240" controls>
-    <source src="{{MEDIA_URL}}/{{object.refid}}/{{object.refid}}_a.mp4" type="video/mp4">
+<video class="video--detail" controls>
+    <source src="{{MEDIA_URL}}{{object.refid}}/{{object.refid}}.mp4" type="video/mp4">
     Your browser does not support the video tag.
 </video>
 {% endif %}
 
-<h2>Assign Rights</h2>
+<h2 class="mt-20 mb-0">Additional Description</h2>
+<dl class="list--unstyled">
+  <dt>Ref ID:</dt>
+  <dd>{{object.refid}}</dd>
+  <dt>Collection:</dt>
+  <dd>{{object.resource_title}}</dd>
+</dl>
+<a class="btn btn--sm btn--white mb-20" href="{{object.archivesspace_link}}">View in ArchivesSpace</a>
+
+{% if object.multiple_masters %}
+<h2 class="mb-0">Derivative Details</h2>
+<dl class="list--unstyled">
+  <dt>Access file duration:</dt><dd>{{object.duration_access}} seconds</dd>
+  <dt>Master file duration:</dt><dd>{{object.duration_master}} seconds</dd>
+</dl>
+{% endif %}
+
+{% if object.tree %}
+<h2 class="mb-0">Package Structure</h2>
+<pre class="mt-0">{{object.tree}}</pre>
+{% endif %}
+
+<h2 class="mt-20 mb-0">Assign Rights</h2>
 {% for statement in rights_statements %}
   <div class="input-group">
     <input
@@ -35,9 +54,13 @@
 
 <div id="error-message" class="input__error" style="display:none"></div>
 
-<div class="mt-20">
-  <button id="approve-button" type="submit" class="btn btn--sm btn--blue">Approve Item</button>
-  <button type="cancel" class="btn btn--sm btn--orange" data-micromodal-trigger="modal__reject-single">Reject Item</button>
+{% if object.possible_duplicate  %}
+<p class="text--orange">This package may have already been processed through this pipeline.</p>
+{% endif %}
+
+<div class="mt-50">
+  <button id="approve-button" type="submit" class="btn btn--lg btn--blue">Approve Item</button>
+  <button type="cancel" class="btn btn--lg btn--orange" data-micromodal-trigger="modal__reject-single">Reject Item</button>
 </div>
 {% endblock %}
 

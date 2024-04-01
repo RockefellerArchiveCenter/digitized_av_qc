@@ -70,12 +70,7 @@ class PackageApproveView(PackageActionView):
     def post(self, request, *args, **kwargs):
         queryset = self._get_queryset(request)
         rights_ids = request.GET['rights_ids']
-        aws_client = AWSClient(
-            'sns',
-            settings.AWS['access_key_id'],
-            settings.AWS['secret_access_key'],
-            settings.AWS['region'],
-            settings.AWS['role_arn'])
+        aws_client = AWSClient('sns', settings.AWS['role_arn'])
         for package in queryset:
             self.move_files(package)
             aws_client.deliver_message(
@@ -106,12 +101,7 @@ class PackageRejectView(PackageActionView):
 
     def post(self, request, *args, **kwargs):
         queryset = self._get_queryset(request)
-        aws_client = AWSClient(
-            'sns',
-            settings.AWS['access_key_id'],
-            settings.AWS['secret_access_key'],
-            settings.AWS['region'],
-            settings.AWS['role_arn'])
+        aws_client = AWSClient('sns', settings.AWS['role_arn'])
         for package in queryset:
             self.delete_files(package)
             aws_client.deliver_message(

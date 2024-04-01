@@ -1,7 +1,6 @@
-from datetime import datetime
-
 import boto3
 from asnake.aspace import ASpace
+from aws_assume_role_lib import assume_role
 from requests import Session
 
 
@@ -31,15 +30,21 @@ class ArchivesSpaceClient(ASpace):
             refid (string): RefID for an ArchivesSpace archival object.
 
         Returns:
-            object title, av_number (tuple of strings): data about the object.
+            object_title, av_number, object_uri, resource_title, resource_uri (tuple of strings): data about the object.
         """
-        results = self.client.get(f"/repositories/{self.repository}/find_by_id/archival_objects?ref_id[]={refid}&resolve[]=archival_objects").json()
-        if len(results['archival_objects']) != 1:
-            raise Exception(f'Expecting to get only one result for ref id {refid} but got {len(results["archival_objects"])} instead.')
-        object = results['archival_objects'][0]['_resolved']
-        av_number = self.get_av_number(object['instances'])
-
-        return object['display_string'], av_number
+        results = self.client.get(f"/repositories/{self.repository}/find_by_id/archival_objects?ref_id[]={refid}&resolve[]=archival_objects&resolve[]=archival_objects::resource").json()
+        try:
+            if len(results['archival_objects']) != 1:
+                raise Exception(f'Expecting to get one result for ref id {refid} but got {len(results["archival_objects"])} instead.')
+            object = results['archival_objects'][0]['_resolved']
+            av_number = self.get_av_number(object['instances'])
+            object_uri = object['uri']
+            resource = object['resource']['_resolved']
+            resource_title = resource['title']
+            resource_uri = resource['uri']
+            return object['display_string'], av_number, object_uri, resource_title, resource_uri
+        except KeyError:
+            raise Exception(f'Unable to fetch results for {refid}. Got results {results}')
 
 
 class AquilaClient(object):
@@ -59,46 +64,37 @@ class AquilaClient(object):
 
 class AWSClient(object):
 
-    def __init__(self, resource, access_key_id, secret_access_key, region, role_arn):
+    def __init__(self, resource, role_arn):
         """Gets Boto3 client which authenticates with a specific IAM role."""
-        now = datetime.now()
-        timestamp = now.timestamp()
-        sts = boto3.client(
-            'sts',
-            aws_access_key_id=access_key_id,
-            aws_secret_access_key=secret_access_key,
-            region_name=region)
-        role = sts.assume_role(
-            RoleArn=role_arn,
-            RoleSessionName=f'digitized-av-qc-{timestamp}')
-        credentials = role['Credentials']
-        self.client = boto3.client(
-            resource,
-            region_name=region,
-            aws_access_key_id=credentials['AccessKeyId'],
-            aws_secret_access_key=credentials['SecretAccessKey'],
-            aws_session_token=credentials['SessionToken'],)
+        self.client = self.get_client_with_role(resource, role_arn)
+
+    def get_client_with_role(self, resource, role_arn):
+        """Gets Boto3 client which authenticates with a specific IAM role."""
+        session = boto3.Session()
+        assumed_role_session = assume_role(session, role_arn)
+        return assumed_role_session.client(resource)
 
     def deliver_message(self, sns_topic, package, message, outcome, rights_ids=None):
         """Delivers message to SNS Topic."""
         attributes = {
-            'format': {
-                'DataType': 'String',
-                'StringValue': package.get_type_display(),
-            },
-            'refid': {
-                'DataType': 'String',
-                'StringValue': package.refid,
-            },
             'service': {
                 'DataType': 'String',
-                'StringValue': 'qc',
+                'StringValue': 'digitized_av_qc',
             },
             'outcome': {
                 'DataType': 'String',
                 'StringValue': outcome,
             }
         }
+        if package:
+            attributes['format'] = {
+                'DataType': 'String',
+                'StringValue': package.get_type_display(),
+            }
+            attributes['refid'] = {
+                'DataType': 'String',
+                'StringValue': package.refid,
+            }
         if rights_ids:
             attributes['rights_ids'] = {
                 'DataType': 'String',
