@@ -3,6 +3,7 @@
 *.pickle
 */config.py
 .coverage
+.tox
 
 ### Django ###
 *.log
