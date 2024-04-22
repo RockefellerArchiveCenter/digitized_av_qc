@@ -1,5 +1,4 @@
 FROM python:3.11-bookworm as base
-ARG WSGI_VERSION=5.0.0
 
 RUN apt-get clean && apt-get update
 RUN apt-get install --yes ffmpeg
@@ -10,6 +9,8 @@ RUN pip install -r requirements.txt
 COPY . /var/www/digitized-av-qc
 
 FROM base as build
+ARG WSGI_VERSION=5.0.0
+
 RUN apt-get install --yes apache2 apache2-dev python3.11-dev cron
 RUN wget https://github.com/GrahamDumpleton/mod_wsgi/archive/refs/tags/${WSGI_VERSION}.tar.gz \
     && tar xvfz ${WSGI_VERSION}.tar.gz \
