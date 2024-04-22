@@ -1,4 +1,6 @@
-FROM python:3.10-buster as base
+FROM python:3.11-bookworm as base
+ARGS WSGI_VERSION=5.0.0
+
 RUN apt-get clean && apt-get update
 RUN apt-get install --yes ffmpeg
 
@@ -8,15 +10,15 @@ RUN pip install -r requirements.txt
 COPY . /var/www/digitized-av-qc
 
 FROM base as build
-RUN apt-get install --yes apache2 apache2-dev cron
-RUN wget https://github.com/GrahamDumpleton/mod_wsgi/archive/refs/tags/4.9.0.tar.gz \
-    && tar xvfz 4.9.0.tar.gz \
-    && cd mod_wsgi-4.9.0 \
+RUN apt-get install --yes apache2 apache2-dev python3.11-dev cron
+RUN wget https://github.com/GrahamDumpleton/mod_wsgi/archive/refs/tags/${WSGI_VERSION}.tar.gz \
+    && tar xvfz ${WSGI_VERSION}.tar.gz \
+    && cd mod_wsgi-${WSGI_VERSION} \
     && ./configure --with-apxs=/usr/bin/apxs --with-python=/usr/local/bin/python \
     && make \
     && make install \
     && make clean
-RUN rm -rf 4.9.0.tar.gz mod_wsgi-4.9.0
+RUN rm -rf ${WSGI_VERSION}.tar.gz mod_wsgi-${WSGI_VERSION}
 
 ADD ./apache/000-digitized_av_qc.conf /etc/apache2/sites-available/000-digitized_av_qc.conf
 ADD ./apache/wsgi.load /etc/apache2/mods-available/wsgi.load
