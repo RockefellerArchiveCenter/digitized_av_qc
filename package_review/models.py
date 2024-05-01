@@ -25,6 +25,7 @@ class Package(models.Model):
     duration_access = models.FloatField()
     duration_master = models.FloatField()
     multiple_masters = models.BooleanField()
+    undated_object = models.BooleanField(default=False)
     possible_duplicate = models.BooleanField(default=False)
     refid = models.CharField(max_length=32)
     tree = models.JSONField(null=True, blank=True)
