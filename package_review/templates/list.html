@@ -20,6 +20,7 @@ Complete QC and Assign Rights for Digitized Items
                 <th>Format</th>
                 <th>Collection</th>
                 <th>Multiple Master Files?</th>
+                <th>Undated Object?</th>
                 <th>Possible Duplicate?</th>
             </tr>
         </thead>
@@ -39,6 +40,7 @@ Complete QC and Assign Rights for Digitized Items
                 <td>{{object.get_type_display}}</td>
                 <td>{{object.resource_title}}</td>
                 <td>{{object.multiple_masters}}</td>
+                <td>{{object.undated_object}}</td>
                 <td>{{object.possible_duplicate}}</td>
             </tr>
             {% endfor %}

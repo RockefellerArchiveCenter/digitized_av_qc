@@ -25,6 +25,7 @@
   <dd>{{object.resource_title}}</dd>
 </dl>
 <a class="btn btn--sm btn--white mb-20" href="{{object.archivesspace_link}}">View in ArchivesSpace</a>
+<a class="btn btn--sm btn--white mb-20" href="{% url 'refresh-data' %}?object_list={{object.pk}}">Refresh ArchivesSpace Data</a>
 
 {% if object.multiple_masters %}
 <h2 class="mb-0">Derivative Details</h2>
@@ -53,6 +54,10 @@
 {% endfor %}
 
 <div id="error-message" class="input__error" style="display:none"></div>
+
+{% if object.undated_object  %}
+<p class="text--orange">This package may be associated with an object in ArchivesSpace that does not have structured dates.</p>
+{% endif %}
 
 {% if object.possible_duplicate  %}
 <p class="text--orange">This package may have already been processed through this pipeline.</p>
