@@ -181,7 +181,7 @@ class DiscoverPackagesCommandTests(TestCase):
     @patch('package_review.clients.ArchivesSpaceClient.__init__')
     @patch('package_review.management.commands.discover_packages.Command._get_duration')
     @patch('package_review.management.commands.discover_packages.Command._has_multiple_masters')
-    @patch('package_review.helpers.get_config')
+    @patch('package_review.management.commands.discover_packages.get_config')
     @patch('package_review.clients.ArchivesSpaceClient.get_package_data')
     @patch('package_review.clients.AWSClient.deliver_message')
     @patch('package_review.clients.AWSClient.get_client_with_role')
@@ -195,9 +195,9 @@ class DiscoverPackagesCommandTests(TestCase):
 
         discover_packages.Command().handle()
         mock_init.assert_called_once()
-        mock_client.assert_called_once()
+        mock_client.assert_not_called()
         mock_message.assert_not_called()
-        mock_config.asser_called_once()
+        mock_config.assert_called_once()
         self.assertEqual(mock_package_data.call_count, expected_len)
         self.assertEqual(Package.objects.all().count(), expected_len)
         for package in Package.objects.all():
