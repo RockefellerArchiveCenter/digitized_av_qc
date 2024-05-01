@@ -19,7 +19,8 @@ from django.conf.urls.static import static
 from django.urls import re_path
 
 from package_review.views import (PackageApproveView, PackageBulkApproveView,
-                                  PackageBulkRejectView, PackageDetailView,
+                                  PackageBulkRejectView,
+                                  PackageDataRefreshView, PackageDetailView,
                                   PackageListView, PackageRejectView)
 
 urlpatterns = [
@@ -30,4 +31,5 @@ urlpatterns = [
     re_path(r'^package/bulk-reject/$', PackageBulkRejectView.as_view(), name='package-bulk-reject'),
     re_path(r'^package/approve/', PackageApproveView.as_view(), name='package-approve'),
     re_path(r'^package/reject/', PackageRejectView.as_view(), name='package-reject'),
+    re_path(r'^package/refresh-data/', PackageDataRefreshView.as_view(), name='refresh-data'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
