@@ -12,14 +12,15 @@ from moto import mock_sns, mock_sqs, mock_ssm, mock_sts
 from moto.core import DEFAULT_ACCOUNT_ID
 
 from .clients import ArchivesSpaceClient, AWSClient
+from .helpers import get_config
 from .management.commands import (check_qc_status, discover_packages,
                                   fetch_rights_statements)
 from .models import Package, RightsStatement
 
 FIXTURE_DIR = "fixtures"
 RIGHTS_DATA = [("1", "foo"), ("2", "bar")]
-PACKAGE_DATA = [("foo", "av 123", 123.45, 123.45, False, "9ba10e5461d401517b0e1a53d514ec87", Package.AUDIO),
-                ("bar", "av 321", 543.21, 543.21, True, "f7d3dd6dc9c4732fa17dbd88fbe652b6", Package.VIDEO)]
+PACKAGE_DATA = [("foo", "av 123", 123.45, 123.45, False, False, "9ba10e5461d401517b0e1a53d514ec87", Package.AUDIO),
+                ("bar", "av 321", 543.21, 543.21, True, True, "f7d3dd6dc9c4732fa17dbd88fbe652b6", Package.VIDEO)]
 
 
 def create_rights_statements():
@@ -30,13 +31,14 @@ def create_rights_statements():
 
 
 def create_packages():
-    for title, av_number, duration_access, duration_master, multiple_masters, refid, type in PACKAGE_DATA:
+    for title, av_number, duration_access, duration_master, multiple_masters, undated_object, refid, type in PACKAGE_DATA:
         Package.objects.create(
             title=title,
             av_number=av_number,
             duration_access=duration_access,
             duration_master=duration_master,
             multiple_masters=multiple_masters,
+            undated_object=undated_object,
             refid=refid,
             type=type,
             process_status=Package.PENDING)
@@ -49,6 +51,26 @@ def copy_binaries():
             Path("package_review", FIXTURE_DIR, "packages", refid),
             Path(settings.BASE_STORAGE_DIR, refid),
             dirs_exist_ok=True)
+
+
+class HelpersTests(TestCase):
+
+    @mock_ssm
+    @patch('package_review.clients.AWSClient.get_client_with_role')
+    def test_get_config(self, mock_client):
+        """Asserts configs are properly fetched from SSM"""
+        ssm = boto3.client('ssm', region_name='us-east-1')
+        mock_client.return_value = ssm
+        path = "/dev/digitized-av-qc"
+        for name, value in [("foo", "bar"), ("baz", "buzz")]:
+            ssm.put_parameter(
+                Name=f"{path}/{name}",
+                Value=value,
+                Type="SecureString",
+            )
+        config = get_config(path)
+        self.assertIsInstance(config, dict)
+        self.assertEqual(config, {'foo': 'bar', 'baz': 'buzz'})
 
 
 class ArchivesSpaceClientTests(TestCase):
@@ -73,6 +95,27 @@ class ArchivesSpaceClientTests(TestCase):
         instances = [{"sub_container": {"indicator_2": "AV 1234"}}, {"sub_container": {}}]
         av_number = self.as_client.get_av_number(instances)
         self.assertEqual(av_number, "AV 1234")
+
+    def test_has_structured_dates(self):
+        """Asserts presence of structured dates are parsed correctly."""
+        for dates, expected in [
+            ([], False),
+            ([{
+                "expression": "1950",
+                "date_type": "single"
+            }], False),
+            ([{
+                "begin": "1950",
+                "end": "1969",
+                "date_type": "inclusive",
+            }], True),
+            ([{
+                "begin": "1950",
+                "date_type": "single"
+            }], True)
+        ]:
+            output = self.as_client.has_structured_dates(dates)
+            self.assertEqual(output, expected)
 
 
 class AWSClientTests(TestCase):
@@ -135,14 +178,14 @@ class DiscoverPackagesCommandTests(TestCase):
             self.assertEqual(output, expected)
 
     @mock_sts
-    @mock_ssm
     @patch('package_review.clients.ArchivesSpaceClient.__init__')
     @patch('package_review.management.commands.discover_packages.Command._get_duration')
     @patch('package_review.management.commands.discover_packages.Command._has_multiple_masters')
+    @patch('package_review.management.commands.discover_packages.get_config')
     @patch('package_review.clients.ArchivesSpaceClient.get_package_data')
     @patch('package_review.clients.AWSClient.deliver_message')
     @patch('package_review.clients.AWSClient.get_client_with_role')
-    def test_handle(self, mock_client, mock_message, mock_package_data, mock_masters, mock_duration, mock_init):
+    def test_handle(self, mock_client, mock_message, mock_package_data, mock_config, mock_masters, mock_duration, mock_init):
         """Asserts cron produces expected results."""
         expected_len = len(list(Path(settings.BASE_STORAGE_DIR).iterdir()))
         mock_init.return_value = None
@@ -152,8 +195,9 @@ class DiscoverPackagesCommandTests(TestCase):
 
         discover_packages.Command().handle()
         mock_init.assert_called_once()
-        mock_client.assert_called_once()
+        mock_client.assert_not_called()
         mock_message.assert_not_called()
+        mock_config.assert_called_once()
         self.assertEqual(mock_package_data.call_count, expected_len)
         self.assertEqual(Package.objects.all().count(), expected_len)
         for package in Package.objects.all():
@@ -166,12 +210,12 @@ class DiscoverPackagesCommandTests(TestCase):
 
     @mock_sns
     @mock_sts
-    @mock_ssm
     @patch('package_review.clients.ArchivesSpaceClient.__init__')
     @patch('package_review.clients.ArchivesSpaceClient.get_package_data')
     @patch('package_review.clients.AWSClient.deliver_message')
     @patch('package_review.clients.AWSClient.get_client_with_role')
-    def test_handle_exception(self, mock_client, mock_message, mock_package_data, mock_init):
+    @patch('package_review.helpers.get_config')
+    def test_handle_exception(self, mock_config, mock_client, mock_message, mock_package_data, mock_init):
         """Asserts exceptions while processing packages are handled as expected."""
         expected_len = len(list(Path(settings.BASE_STORAGE_DIR).iterdir()))
         mock_package_data.side_effect = Exception("foo")
@@ -188,7 +232,6 @@ class CheckQCStatusCommandTests(TestCase):
 
     @mock_sns
     @mock_sts
-    @mock_ssm
     @patch('package_review.clients.AWSClient.deliver_message')
     @patch('package_review.clients.AWSClient.get_client_with_role')
     def test_qc_done(self, mock_client, mock_message):
@@ -200,16 +243,17 @@ class CheckQCStatusCommandTests(TestCase):
             None,
             'No packages left to QC',
             'COMPLETE')
+        mock_client.assert_called_once()
 
     @mock_sns
     @mock_sts
-    @mock_ssm
     @patch('package_review.clients.AWSClient.deliver_message')
     @patch('package_review.clients.AWSClient.get_client_with_role')
     def test_no_message(self, mock_client, mock_message):
         copy_binaries()
         check_qc_status.Command().handle()
         mock_message.assert_not_called()
+        mock_client.assert_called_once()
 
     def tearDown(self):
         for dir in Path(settings.BASE_STORAGE_DIR).iterdir():
@@ -291,6 +335,30 @@ class PackageActionViewTests(TestCase):
         self.assertTrue(len(list(Path(settings.BASE_STORAGE_DIR).iterdir())) == 0)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, reverse('package-list'))
+
+    @patch('package_review.clients.ArchivesSpaceClient.__init__')
+    @patch('package_review.clients.ArchivesSpaceClient.get_package_data')
+    @patch('package_review.views.get_config')
+    def test_refresh_view(self, mock_config, mock_data, mock_init):
+        mock_init.return_value = None
+        title = "title"
+        av_number = "AV 1234"
+        object_uri = "/repositories/2/archival_objects/1"
+        resource_title = "resource title"
+        resource_uri = "/repositories/2/resources/1"
+        undated_object = True
+        mock_data.return_value = title, av_number, object_uri, resource_title, resource_uri, undated_object
+        package = random.choice(Package.objects.all())
+        response = self.client.get(f'{reverse("refresh-data")}?object_list={package.id}')
+        package.refresh_from_db()
+        self.assertEqual(package.title, title)
+        self.assertEqual(package.av_number, av_number)
+        self.assertEqual(package.uri, object_uri)
+        self.assertEqual(package.resource_title, resource_title)
+        self.assertEqual(package.resource_uri, resource_uri)
+        self.assertEqual(package.undated_object, undated_object)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, reverse('package-detail', kwargs={'pk': package.pk}))
 
     def tearDown(self):
         if Path(settings.BASE_DESTINATION_DIR).exists():
