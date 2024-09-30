@@ -11,6 +11,25 @@ class ArchivesSpaceClient(ASpace):
         super().__init__(**kwargs)
         self.repository = kwargs['repository']
 
+    def has_structured_dates(self, dates_array):
+        """Parses date array to determine if structured dates are available.
+
+        Args:
+            dates_array (dict): Dates data from ArchivesSpace
+
+        Returns:
+            Boolean
+        """
+        start_dates = []
+        end_dates = []
+        for date in dates_array:
+            start_dates.append(date.get('begin'))
+            if date['date_type'] == 'single':
+                end_dates.append(date.get('begin'))
+            else:
+                end_dates.append(date.get('end'))
+        return bool(all([len(list(filter(None, start_dates))), len(list(filter(None, end_dates)))]))
+
     def get_av_number(self, instances):
         """Parse the AV number for an ArchivesSpace object.
 
@@ -42,7 +61,8 @@ class ArchivesSpaceClient(ASpace):
             resource = object['resource']['_resolved']
             resource_title = resource['title']
             resource_uri = resource['uri']
-            return object['display_string'], av_number, object_uri, resource_title, resource_uri
+            undated_object = self.has_structured_dates(object['dates'])
+            return object['display_string'], av_number, object_uri, resource_title, resource_uri, undated_object
         except KeyError:
             raise Exception(f'Unable to fetch results for {refid}. Got results {results}')
 

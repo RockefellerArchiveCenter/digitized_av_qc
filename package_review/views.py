@@ -1,3 +1,4 @@
+from os import getenv
 from pathlib import Path
 from shutil import rmtree
 
@@ -5,7 +6,8 @@ from django.conf import settings
 from django.shortcuts import redirect
 from django.views.generic import DetailView, ListView, TemplateView, View
 
-from .clients import AWSClient
+from .clients import ArchivesSpaceClient, AWSClient
+from .helpers import get_config
 from .models import Package, RightsStatement
 
 
@@ -118,3 +120,24 @@ class PackageRejectView(PackageActionView):
         bag_dir = Path(settings.BASE_STORAGE_DIR, package.refid)
         if bag_dir.exists():
             rmtree(bag_dir)
+
+
+class PackageDataRefreshView(PackageActionView):
+    def get(self, request, *args, **kwargs):
+        queryset = self._get_queryset(request)
+        configuration = get_config(f"/{getenv('ENV')}/{getenv('APP_CONFIG_PATH')}")
+        client = ArchivesSpaceClient(
+            baseurl=configuration.get('AS_BASEURL'),
+            username=configuration.get('AS_USERNAME'),
+            password=configuration.get('AS_PASSWORD'),
+            repository=configuration.get('AS_REPO'))
+        for package in queryset:
+            title, av_number, uri, resource_title, resource_uri, undated_object = client.get_package_data(package.refid)
+            package.title = title
+            package.av_number = av_number
+            package.uri = uri
+            package.resource_title = resource_title
+            package.resource_uri = resource_uri
+            package.undated_object = undated_object
+            package.save()
+        return redirect('package-detail', pk=package.pk)
