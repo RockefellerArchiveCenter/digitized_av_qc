@@ -191,7 +191,7 @@ class DiscoverPackagesCommandTests(TestCase):
         mock_init.return_value = None
         mock_masters.return_value = False
         mock_duration.return_value = 123.45
-        mock_package_data.return_value = 'object_title', 'av_number', 'object_uri', 'resource_title', 'resource_uri'
+        mock_package_data.return_value = 'object_title', 'av_number', 'object_uri', 'resource_title', 'resource_uri', False
 
         discover_packages.Command().handle()
         mock_init.assert_called_once()
