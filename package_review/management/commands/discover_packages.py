@@ -68,7 +68,7 @@ class Command(BaseCommand):
             refid = package_path.stem
             if not Package.objects.filter(refid=refid, process_status=Package.PENDING).exists():
                 try:
-                    title, av_number, uri, resource_title, resource_uri = client.get_package_data(refid)
+                    title, av_number, uri, resource_title, resource_uri, undated_object = client.get_package_data(refid)
                     package_type = self._get_type(package_path)
                     package_tree = self._get_dir_tree(package_path)
                     possible_duplicate = Package.objects.filter(refid=refid, process_status=Package.APPROVED).exists()
@@ -86,6 +86,7 @@ class Command(BaseCommand):
                         refid=refid,
                         type=package_type,
                         tree=package_tree,
+                        undated_object=undated_object,
                         process_status=Package.PENDING)
                     created_list.append(refid)
                 except Exception as e:
