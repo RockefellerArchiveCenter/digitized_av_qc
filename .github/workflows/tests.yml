@@ -1,0 +1,51 @@
+name: Test
+
+on:
+  pull_request:
+    branches:
+      - development
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    environment:
+      name: development
+
+    env:
+        CONTAINER: web
+        APPLICATION_NAME: digitized_av_qc
+        APPLICATION_PORT: 80
+
+    services:
+      docker:
+        image: docker:stable
+        options: --privileged
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Login to Docker
+        run: echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USERNAME }}" --password-stdin
+
+      - name: Start Docker containers
+        run: docker compose up -d
+
+      - name: Install pre-commit
+        run: |
+          pip install "pre-commit===2.13.0"
+          pre-commit install
+
+      - name: Run pre-commit checks
+        run: pre-commit run --all-files --show-diff-on-failure
+
+      - name: Run tests
+        run: docker compose exec -T $CONTAINER python manage.py test
