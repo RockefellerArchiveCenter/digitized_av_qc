@@ -21,7 +21,6 @@ When you're done, shut down Docker Compose:
 
     $ docker compose down
 
-
 ## License
 
 Code is released under an MIT License, as all your code should be. See [LICENSE](LICENSE) for details.
