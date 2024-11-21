@@ -3,7 +3,6 @@ import subprocess
 import traceback
 from os import getenv
 
-from directory_tree import display_tree
 from django.conf import settings
 from django.core.management.base import BaseCommand
 
@@ -49,9 +48,6 @@ class Command(BaseCommand):
     def _has_multiple_masters(self, master_files):
         return bool(len(list(master_files)) > 1)
 
-    def _get_dir_tree(self, root_path):
-        return display_tree(root_path, string_rep=True, show_hidden=True)
-
     def handle(self, *args, **options):
         if not settings.BASE_STORAGE_DIR.is_dir():
             self.stdout.write(self.style.ERROR(f'Root directory {str(settings.BASE_STORAGE_DIR)} for files waiting to be QCed does not exist.'))
@@ -70,7 +66,6 @@ class Command(BaseCommand):
                 try:
                     title, av_number, uri, resource_title, resource_uri, undated_object = client.get_package_data(refid)
                     package_type = self._get_type(package_path)
-                    package_tree = self._get_dir_tree(package_path)
                     possible_duplicate = Package.objects.filter(refid=refid, process_status=Package.APPROVED).exists()
                     access_suffix, master_suffix = ('*.mp3', '*.wav') if package_type == Package.AUDIO else ('*.mp4', '*.mkv')
                     Package.objects.create(
@@ -85,7 +80,6 @@ class Command(BaseCommand):
                         possible_duplicate=possible_duplicate,
                         refid=refid,
                         type=package_type,
-                        tree=package_tree,
                         undated_object=undated_object,
                         process_status=Package.PENDING)
                     created_list.append(refid)
