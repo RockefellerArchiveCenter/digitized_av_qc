@@ -35,6 +35,7 @@
 </dl>
 {% endif %}
 
+<a class="btn btn--sm btn--white mb-20" href="{% url 'update-tree' %}?object_list={{object.pk}}">{% if object.tree %}Update{% else %}Fetch{% endif %} Package Structure</a>
 {% if object.tree %}
 <h2 class="mb-0">Package Structure</h2>
 <pre class="mt-0">{{object.tree}}</pre>
