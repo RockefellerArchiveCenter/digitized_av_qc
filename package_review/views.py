@@ -2,6 +2,7 @@ from os import getenv
 from pathlib import Path
 from shutil import rmtree
 
+from directory_tree import display_tree
 from django.conf import settings
 from django.shortcuts import redirect
 from django.views.generic import DetailView, ListView, TemplateView, View
@@ -123,6 +124,8 @@ class PackageRejectView(PackageActionView):
 
 
 class PackageDataRefreshView(PackageActionView):
+    """Updates ArchivesSpace data for a package."""
+
     def get(self, request, *args, **kwargs):
         queryset = self._get_queryset(request)
         configuration = get_config(f"/{getenv('ENV')}/{getenv('APP_CONFIG_PATH')}")
@@ -139,5 +142,16 @@ class PackageDataRefreshView(PackageActionView):
             package.resource_title = resource_title
             package.resource_uri = resource_uri
             package.undated_object = undated_object
+            package.save()
+        return redirect('package-detail', pk=package.pk)
+
+
+class PackageTreeUpdateView(PackageActionView):
+    """Updates the directory tree for a package."""
+
+    def get(self, request, *args, **kwargs):
+        queryset = self._get_queryset(request)
+        for package in queryset:
+            package.tree = display_tree(settings.BASE_STORAGE_DIR / package.refid, string_rep=True, show_hidden=True)
             package.save()
         return redirect('package-detail', pk=package.pk)
