@@ -21,7 +21,8 @@ from django.urls import re_path
 from package_review.views import (PackageApproveView, PackageBulkApproveView,
                                   PackageBulkRejectView,
                                   PackageDataRefreshView, PackageDetailView,
-                                  PackageListView, PackageRejectView)
+                                  PackageListView, PackageRejectView,
+                                  PackageTreeUpdateView)
 
 urlpatterns = [
     # path("admin/", admin.site.urls),
@@ -32,4 +33,5 @@ urlpatterns = [
     re_path(r'^package/approve/', PackageApproveView.as_view(), name='package-approve'),
     re_path(r'^package/reject/', PackageRejectView.as_view(), name='package-reject'),
     re_path(r'^package/refresh-data/', PackageDataRefreshView.as_view(), name='refresh-data'),
+    re_path(r'^package/update-tree/', PackageTreeUpdateView.as_view(), name='update-tree'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
