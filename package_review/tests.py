@@ -360,6 +360,13 @@ class PackageActionViewTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, reverse('package-detail', kwargs={'pk': package.pk}))
 
+    def test_update_tree(self):
+        package = random.choice(Package.objects.all())
+        response = self.client.get(f'{reverse("update-tree")}?object_list={package.id}')
+        package.refresh_from_db()
+        self.assertIn(package.refid, package.tree)
+        self.assertEqual(response.url, reverse('package-detail', kwargs={'pk': package.pk}))
+
     def tearDown(self):
         if Path(settings.BASE_DESTINATION_DIR).exists():
             shutil.rmtree(Path(settings.BASE_DESTINATION_DIR))
