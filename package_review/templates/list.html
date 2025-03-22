@@ -6,7 +6,10 @@ Complete QC and Assign Rights for Digitized Items
 
 {% block content %}
 {% if object_list|length %}
-<!-- Search -->
+
+<p class="mb-20">
+    {{object_list|length}} {% if object_list|length == 1 %}package{% else %}packages{% endif %} pending approval
+</p>
 
 <form id="package-list-table" action="{% url 'package-bulk-approve' %}" method="get">
     <button type="submit" class="btn btn--sm btn--blue btn--list">Assign Rights to Selected Items</button>
