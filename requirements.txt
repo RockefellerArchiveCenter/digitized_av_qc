@@ -8,12 +8,12 @@ aws-assume-role-lib==2.10.0
     # via -r requirements.in
 boltons==25.0.0
     # via archivessnake
-boto3==1.40.40
+boto3==1.40.42
     # via
     #   -r requirements.in
     #   aws-assume-role-lib
     #   moto
-botocore==1.40.40
+botocore==1.40.42
     # via
     #   boto3
     #   moto
@@ -24,7 +24,7 @@ cffi==2.0.0
     # via cryptography
 charset-normalizer==3.4.3
     # via requests
-cryptography==46.0.1
+cryptography==46.0.2
     # via moto
 directory-tree==0.0.4
     # via -r requirements.in
