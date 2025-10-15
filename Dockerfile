@@ -1,36 +1,38 @@
-FROM python:3.11-bookworm as base
+FROM python:3.11-alpine AS base
 
-RUN apt-get clean && apt-get update
-RUN apt-get install --yes ffmpeg
+ENV APPLICATION_NAME=digitized-av-qc
+ENV APPLICATION_DIR=digitized_image_qc
 
-COPY requirements.txt /var/www/digitized-av-qc/requirements.txt
-WORKDIR /var/www/digitized-av-qc
+# Install base system requirements
+RUN apk add --no-cache ffmpeg ca-certificates postgresql-dev
+
+WORKDIR /var/www/${APPLICATION_NAME}
+
+# Install Python requirements
+COPY requirements.txt .
 RUN pip install -r requirements.txt
-COPY . /var/www/digitized-av-qc
 
-FROM base as build
-ARG WSGI_VERSION=5.0.0
+# Bring in the rest of the application
+COPY digitized_av_qc package_review entrypoint.* manage.py ./
 
-RUN apt-get install --yes apache2 apache2-dev python3.11-dev cron
-RUN wget https://github.com/GrahamDumpleton/mod_wsgi/archive/refs/tags/${WSGI_VERSION}.tar.gz \
-    && tar xvfz ${WSGI_VERSION}.tar.gz \
-    && cd mod_wsgi-${WSGI_VERSION} \
-    && ./configure --with-apxs=/usr/bin/apxs --with-python=/usr/local/bin/python \
-    && make \
-    && make install \
-    && make clean
-RUN rm -rf ${WSGI_VERSION}.tar.gz mod_wsgi-${WSGI_VERSION}
+FROM base AS build
 
-ADD ./apache/000-digitized_av_qc.conf /etc/apache2/sites-available/000-digitized_av_qc.conf
-ADD ./apache/wsgi.load /etc/apache2/mods-available/wsgi.load
-RUN a2dissite 000-default.conf
-RUN a2ensite 000-digitized_av_qc.conf
-RUN a2enmod headers
-RUN a2enmod rewrite
-RUN a2enmod wsgi
+# Install webserver requirements
+RUN apk add --no-cache apache2 apache2-dev apache2-mod-wsgi
 
-COPY crontab /etc/cron.d/crontab
-RUN crontab /etc/cron.d/crontab
+# Disable existing sites
+RUN find /etc/apache2/conf.d/ -type f -name "*.conf" -print0 | xargs -0 -I {} mv {} {}.disabled
 
+# Enable WSGI
+RUN mv /etc/apache2/conf.d/wsgi-module.conf.disabled /etc/apache2/conf.d/wsgi-module.conf
+
+# Create the default site
+COPY ./apache/${APPLICATION_NAME}.conf /etc/apache2/conf.d/${APPLICATION_NAME}.conf
+
+# Add cron schedule
+COPY crontab /etc/crontabs/root
+
+# Expose HTTP port
 EXPOSE 80
-ENTRYPOINT [ "./entrypoint.prod.sh" ]
+
+ENTRYPOINT ["./entrypoint.prod.sh"]
