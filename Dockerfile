@@ -4,7 +4,7 @@ ENV APPLICATION_NAME=digitized-av-qc
 ENV APPLICATION_DIR=digitized_image_qc
 
 # Install base system requirements
-RUN apk add --no-cache ffmpeg ca-certificates postgresql-dev
+RUN apk add --no-cache ffmpeg postgresql-dev
 
 WORKDIR /var/www/${APPLICATION_NAME}
 
