@@ -173,8 +173,8 @@ class DiscoverPackagesCommandTests(TestCase):
             discover_packages.Command()._get_type(Path("1234"))
 
     def test_get_duration(self):
-        for (filename, expected) in [("9ba10e5461d401517b0e1a53d514ec87.mp4", 5.759), ("f7d3dd6dc9c4732fa17dbd88fbe652b6.mp3", 27.252)]:
-            output = round(discover_packages.Command()._get_duration([Path(settings.BASE_STORAGE_DIR, filename.split('.')[0], filename)]), 3)
+        for (filename, expected) in [("9ba10e5461d401517b0e1a53d514ec87.mp4", 5.758549), ("f7d3dd6dc9c4732fa17dbd88fbe652b6.mp3", 27.252)]:
+            output = discover_packages.Command()._get_duration([Path(settings.BASE_STORAGE_DIR, filename.split('.')[0], filename)])
             self.assertEqual(output, expected)
 
     @mock_sts

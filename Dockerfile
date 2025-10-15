@@ -13,7 +13,7 @@ COPY requirements.txt .
 RUN pip install -r requirements.txt
 
 # Bring in the rest of the application
-COPY digitized_av_qc package_review entrypoint.* manage.py ./
+COPY ${APPLICATION_DIR} package_review entrypoint.* manage.py ./
 
 FROM base AS build
 
@@ -33,6 +33,6 @@ COPY ./apache/${APPLICATION_NAME}.conf /etc/apache2/conf.d/${APPLICATION_NAME}.c
 COPY crontab /etc/crontabs/root
 
 # Expose HTTP port
-EXPOSE 80
+EXPOSE ${APPLICATION_PORT}
 
 ENTRYPOINT ["./entrypoint.prod.sh"]
