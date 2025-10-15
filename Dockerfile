@@ -2,6 +2,7 @@ FROM python:3.11-alpine AS base
 
 ENV APPLICATION_NAME=digitized-av-qc
 ENV APPLICATION_DIR=digitized_av_qc
+ENV APPLICATION_PORT=80
 
 # Install base system requirements
 RUN apk add --no-cache ffmpeg postgresql-dev
