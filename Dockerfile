@@ -1,4 +1,4 @@
-FROM python:3.11-alpine AS base
+FROM python:3.12-alpine AS base
 
 ENV APPLICATION_NAME=digitized-av-qc
 ENV APPLICATION_DIR=digitized_av_qc
