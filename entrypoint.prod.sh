@@ -1,9 +1,6 @@
-#!/bin/bash
+#!/bin/sh
 
 set -e
-
-# copy environment variables to file so cron can access them
-declare -p | grep -Ev 'BASHOPTS|BASH_VERSINFO|EUID|PPID|SHELLOPTS|UID' > /container.env
 
 # run app migrations
 python ./manage.py migrate
@@ -15,7 +12,7 @@ python ./manage.py discover_packages
 python ./manage.py fetch_rights_statements
 
 # start cron
-cron
+crond -b
 
 # start Apache
-apache2ctl -D FOREGROUND
+httpd -D FOREGROUND
