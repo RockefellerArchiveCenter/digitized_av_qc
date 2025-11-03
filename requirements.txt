@@ -8,12 +8,12 @@ aws-assume-role-lib==2.10.0
     # via -r requirements.in
 boltons==25.0.0
     # via archivessnake
-boto3==1.40.53
+boto3==1.40.64
     # via
     #   -r requirements.in
     #   aws-assume-role-lib
     #   moto
-botocore==1.40.53
+botocore==1.40.64
     # via
     #   boto3
     #   moto
@@ -58,7 +58,7 @@ pyyaml==6.0.3
     # via
     #   archivessnake
     #   responses
-rapidfuzz==3.14.1
+rapidfuzz==3.14.3
     # via archivessnake
 requests==2.32.5
     # via
@@ -73,7 +73,7 @@ six==1.17.0
     # via python-dateutil
 sqlparse==0.5.3
     # via django
-structlog==25.4.0
+structlog==25.5.0
     # via archivessnake
 urllib3==2.5.0
     # via
