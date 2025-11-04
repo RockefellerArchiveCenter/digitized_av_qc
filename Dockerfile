@@ -14,7 +14,9 @@ COPY requirements.txt .
 RUN pip install -r requirements.txt
 
 # Bring in the rest of the application
-COPY ${APPLICATION_DIR} package_review entrypoint.* manage.py ./
+COPY ${APPLICATION_DIR} ${APPLICATION_DIR}
+COPY package_review package_review
+COPY entrypoint.* manage.py ./
 
 FROM base AS build
 
