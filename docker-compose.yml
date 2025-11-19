@@ -1,5 +1,3 @@
-version: '3'
-
 services:
   db:
     image: postgres:14.4
@@ -38,6 +36,7 @@ services:
       - AWS_ROLE_ARN=arn:aws:iam::123456789012:role/digitized-av-role # Role ARN for role to be assumed by AWS user
       - AWS_REGION=us-east-1 # AWS region in which infrastructure is located (string)
       - AWS_SNS_TOPIC=arn:aws:sns:us-east-1:123456789012:digitized-av-events # ARN for SNS Topic to be posted to (string)
+      - AWS_S3_BUCKET=rac-dev-av-qc # Bucket name for QC bucket
     volumes:
       - .:/var/www/digitized-av-qc
     ports:
