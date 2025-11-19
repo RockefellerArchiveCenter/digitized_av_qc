@@ -28,6 +28,7 @@ class Package(models.Model):
     undated_object = models.BooleanField(default=False)
     possible_duplicate = models.BooleanField(default=False)
     refid = models.CharField(max_length=32)
+    size_bytes = models.PositiveBigIntegerField(blank=True, null=True)
     tree = models.JSONField(null=True, blank=True)
     type = models.IntegerField(choices=TYPE_CHOICES)
     process_status = models.IntegerField(choices=PROCESS_STATUS_CHOICES)
