@@ -1,7 +1,6 @@
 aws-assume-role-lib~=2.10
 ArchivesSnake~=0.9
 boto3~=1.40
-directory_tree~=0.0
 Django~=5.0
 django-storages[s3]~=1.14
 moto~=5.1
