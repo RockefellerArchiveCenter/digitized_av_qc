@@ -1,6 +1,6 @@
 import json
 import random
-import shutil
+from os import getenv
 from pathlib import Path
 from unittest.mock import patch
 
@@ -8,7 +8,7 @@ import boto3
 from django.conf import settings
 from django.shortcuts import reverse
 from django.test import TestCase
-from moto import mock_sns, mock_sqs, mock_ssm, mock_sts
+from moto import mock_aws
 from moto.core import DEFAULT_ACCOUNT_ID
 
 from .clients import ArchivesSpaceClient, AWSClient
@@ -30,7 +30,7 @@ def create_rights_statements():
             title=title)
 
 
-def create_packages():
+def create_packages(status=Package.PENDING):
     for title, av_number, duration_access, duration_master, multiple_masters, undated_object, refid, type in PACKAGE_DATA:
         Package.objects.create(
             title=title,
@@ -41,21 +41,23 @@ def create_packages():
             undated_object=undated_object,
             refid=refid,
             type=type,
-            process_status=Package.PENDING)
+            process_status=status)
 
 
-def copy_binaries():
-    """Moves binary files into place."""
-    for refid in ['9ba10e5461d401517b0e1a53d514ec87', 'f7d3dd6dc9c4732fa17dbd88fbe652b6']:
-        shutil.copytree(
-            Path("package_review", FIXTURE_DIR, "packages", refid),
-            Path(settings.BASE_STORAGE_DIR, refid),
-            dirs_exist_ok=True)
+def upload_bag(s3, bag_path):
+    for dirpath, _, files in (bag_path).walk():
+        for f in files:
+            source = dirpath / f
+            destination = source.relative_to(bag_path.parent)
+            s3.upload_file(
+                str(source),
+                settings.AWS['bucket'],
+                str(destination))
 
 
 class HelpersTests(TestCase):
 
-    @mock_ssm
+    @mock_aws
     @patch('package_review.clients.AWSClient.get_client_with_role')
     def test_get_config(self, mock_client):
         """Asserts configs are properly fetched from SSM"""
@@ -123,9 +125,7 @@ class AWSClientTests(TestCase):
     def setUp(self):
         create_packages()
 
-    @mock_sns
-    @mock_sqs
-    @mock_sts
+    @mock_aws
     @patch('package_review.clients.AWSClient.get_client_with_role')
     def test_deliver_message(self, mock_client):
         sns = boto3.client('sns', region_name='us-east-1')
@@ -147,7 +147,7 @@ class AWSClientTests(TestCase):
             package,
             "This is a message",
             "SUCCESS",
-            "1,2")
+            rights_ids="1,2")
 
         queue = sqs_conn.get_queue_by_name(QueueName="test-queue")
         messages = queue.receive_messages(MaxNumberOfMessages=1)
@@ -157,86 +157,149 @@ class AWSClientTests(TestCase):
         self.assertEqual(message_body['MessageAttributes']['refid']['Value'], package.refid)
         self.assertEqual(message_body['MessageAttributes']['rights_ids']['Value'], "1,2")
 
+    @mock_aws
+    @patch('package_review.clients.AWSClient.get_client_with_role')
+    def test_calculate_package_size(self, mock_client):
+        s3 = boto3.client('s3', region_name='us-east-1')
+        mock_client.return_value = s3
+        s3.create_bucket(Bucket=settings.AWS['bucket'])
+        file_content = "Garbage content for test file!"  # 30 bytes
+        package_id = "123456789"
+        for x in range(5):
+            s3.put_object(
+                Bucket=settings.AWS['bucket'],
+                Key=f'{package_id}/{x}/file.txt',
+                Body=file_content)
+
+        client = AWSClient('s3', settings.AWS['role_arn'])
+
+        size = client.calculate_package_size(package_id)
+        self.assertEqual(size, 150)
+
+    @mock_aws
+    @patch('package_review.clients.AWSClient.get_client_with_role')
+    def test_key_exists(self, mock_client):
+        s3 = boto3.client('s3', region_name='us-east-1')
+        mock_client.return_value = s3
+        s3.create_bucket(Bucket=settings.AWS['bucket'])
+        file_content = "Garbage content for test file!"
+        file_name = 'file.txt'
+        s3.put_object(
+            Bucket=settings.AWS['bucket'],
+            Key=file_name,
+            Body=file_content)
+
+        client = AWSClient('s3', settings.AWS['role_arn'])
+
+        self.assertTrue(client.key_exists(settings.AWS['bucket'], file_name))
+        self.assertFalse(client.key_exists(settings.AWS['bucket'], 'foo'))
+
+    @mock_aws
+    @patch('package_review.clients.AWSClient.get_client_with_role')
+    def test_get_signed_urls(self, mock_client):
+        s3 = boto3.client('s3', region_name='us-east-1')
+        mock_client.return_value = s3
+        s3.create_bucket(Bucket=settings.AWS['bucket'])
+        file_content = "Garbage content for test file!"
+        package_id = "123456789"
+        for x in range(5):
+            s3.put_object(
+                Bucket=settings.AWS['bucket'],
+                Key=f'{package_id}/{x}/file.txt',
+                Body=file_content)
+
+        client = AWSClient('s3', settings.AWS['role_arn'])
+
+        urls = client.get_signed_urls(package_id, settings.AWS['bucket'], '.txt')
+        self.assertEqual(len(urls), 5)
+
+        urls = client.get_signed_urls(package_id, settings.AWS['bucket'], '.mp3')
+        self.assertEqual(len(urls), 0)
+
 
 class DiscoverPackagesCommandTests(TestCase):
 
-    def setUp(self):
-        copy_binaries()
-
-    def test_get_type(self):
+    @mock_aws
+    @patch('package_review.clients.AWSClient.get_client_with_role')
+    @patch('package_review.clients.AWSClient.key_exists')
+    def test_get_type(self, mock_exists, mock_client):
         """Asserts correct types are returned."""
-        for (refid, expected) in [("9ba10e5461d401517b0e1a53d514ec87", Package.VIDEO), ("f7d3dd6dc9c4732fa17dbd88fbe652b6", Package.AUDIO)]:
-            output = discover_packages.Command()._get_type(Path(settings.BASE_STORAGE_DIR, refid))
-            self.assertEqual(output, expected)
+        mock_exists.return_value = True
+        s3 = boto3.client('s3', region_name='us-east-1')
+        mock_client.return_value = s3
+        bucket_name = 'foo'
+        refid = '9ba10e5461d401517b0e1a53d514ec87'
+        s3_client = AWSClient('s3', settings.AWS['role_arn'])
 
-        with self.assertRaises(Exception):
-            discover_packages.Command()._get_type(Path("1234"))
+        output = discover_packages.Command()._get_type(refid, bucket_name, s3_client)
+        self.assertEqual(output, Package.AUDIO)
 
-    def test_get_duration(self):
-        for (filename, expected) in [("9ba10e5461d401517b0e1a53d514ec87.mp4", 5.758549), ("f7d3dd6dc9c4732fa17dbd88fbe652b6.mp3", 27.252)]:
-            output = discover_packages.Command()._get_duration([Path(settings.BASE_STORAGE_DIR, filename.split('.')[0], filename)])
-            self.assertEqual(output, expected)
+        mock_exists.side_effect = [False, True]
+        output = discover_packages.Command()._get_type(refid, bucket_name, s3_client)
+        self.assertEqual(output, Package.VIDEO)
 
-    @mock_sts
+        mock_exists.side_effect = [False, False]
+        with self.assertRaises(Exception) as e:
+            discover_packages.Command()._get_type(refid, bucket_name, s3_client)
+        self.assertEqual(str(e.exception), f"Unable to determine type of package {refid}")
+
+    @mock_aws
     @patch('package_review.clients.ArchivesSpaceClient.__init__')
     @patch('package_review.management.commands.discover_packages.Command._get_duration')
     @patch('package_review.management.commands.discover_packages.Command._has_multiple_masters')
     @patch('package_review.management.commands.discover_packages.get_config')
     @patch('package_review.clients.ArchivesSpaceClient.get_package_data')
     @patch('package_review.clients.AWSClient.deliver_message')
+    @patch('package_review.clients.AWSClient.get_signed_urls')
+    @patch('package_review.clients.AWSClient.calculate_package_size')
     @patch('package_review.clients.AWSClient.get_client_with_role')
-    def test_handle(self, mock_client, mock_message, mock_package_data, mock_config, mock_masters, mock_duration, mock_init):
+    def test_handle(self, mock_client, mock_calculate, mock_signed_urls, mock_message, mock_package_data, mock_config, mock_masters, mock_duration, mock_init):
         """Asserts cron produces expected results."""
-        expected_len = len(list(Path(settings.BASE_STORAGE_DIR).iterdir()))
         mock_init.return_value = None
         mock_masters.return_value = False
         mock_duration.return_value = 123.45
         mock_package_data.return_value = 'object_title', 'av_number', 'object_uri', 'resource_title', 'resource_uri', False
+        mock_calculate.return_value = 0
+        mock_signed_urls.return_value = []
+        refid = "123456789"
 
-        discover_packages.Command().handle()
+        discover_packages.Command().handle(refid=refid)
         mock_init.assert_called_once()
-        mock_client.assert_not_called()
+        mock_client.assert_called_once_with('s3', getenv('AWS_ROLE_ARN'))
         mock_message.assert_not_called()
         mock_config.assert_called_once()
-        self.assertEqual(mock_package_data.call_count, expected_len)
-        self.assertEqual(Package.objects.all().count(), expected_len)
+        mock_package_data.assert_called_once_with("123456789")
+        mock_calculate.assert_called_once_with("123456789")
+        self.assertEqual(mock_signed_urls.call_count, 2)
+        self.assertEqual(Package.objects.all().count(), 1)
         for package in Package.objects.all():
             self.assertEqual(package.multiple_masters, False)
             self.assertEqual(package.duration_access, 123.45)
             self.assertEqual(package.duration_master, 123.45)
 
-        discover_packages.Command().handle()
-        mock_message.assert_not_called()
-
-    @mock_sns
-    @mock_sts
+    @mock_aws
     @patch('package_review.clients.ArchivesSpaceClient.__init__')
     @patch('package_review.clients.ArchivesSpaceClient.get_package_data')
     @patch('package_review.clients.AWSClient.deliver_message')
     @patch('package_review.clients.AWSClient.get_client_with_role')
-    @patch('package_review.helpers.get_config')
+    @patch('package_review.management.commands.discover_packages.get_config')
     def test_handle_exception(self, mock_config, mock_client, mock_message, mock_package_data, mock_init):
         """Asserts exceptions while processing packages are handled as expected."""
-        expected_len = len(list(Path(settings.BASE_STORAGE_DIR).iterdir()))
         mock_package_data.side_effect = Exception("foo")
         mock_init.return_value = None
-        discover_packages.Command().handle()
-        self.assertEqual(mock_message.call_count, expected_len)
-
-    def tearDown(self):
-        for dir in Path(settings.BASE_STORAGE_DIR).iterdir():
-            shutil.rmtree(dir)
+        discover_packages.Command().handle(refid="123456789")
+        mock_message.assert_called_once()
+        self.assertEqual(mock_client.call_count, 2)
+        mock_config.assert_called_once()
 
 
 class CheckQCStatusCommandTests(TestCase):
 
-    @mock_sns
-    @mock_sts
+    @mock_aws
     @patch('package_review.clients.AWSClient.deliver_message')
     @patch('package_review.clients.AWSClient.get_client_with_role')
     def test_qc_done(self, mock_client, mock_message):
-        for dir in Path(settings.BASE_STORAGE_DIR).iterdir():
-            shutil.rmtree(dir)
+        create_packages(Package.APPROVED)
         check_qc_status.Command().handle()
         mock_message.assert_called_once_with(
             settings.AWS['sns_topic'],
@@ -245,19 +308,14 @@ class CheckQCStatusCommandTests(TestCase):
             'COMPLETE')
         mock_client.assert_called_once()
 
-    @mock_sns
-    @mock_sts
+    @mock_aws
     @patch('package_review.clients.AWSClient.deliver_message')
     @patch('package_review.clients.AWSClient.get_client_with_role')
     def test_no_message(self, mock_client, mock_message):
-        copy_binaries()
+        create_packages()
         check_qc_status.Command().handle()
         mock_message.assert_not_called()
-        mock_client.assert_called_once()
-
-    def tearDown(self):
-        for dir in Path(settings.BASE_STORAGE_DIR).iterdir():
-            shutil.rmtree(dir)
+        mock_client.assert_not_called()
 
 
 class FetchRightsStatementsCommandTests(TestCase):
@@ -303,36 +361,52 @@ class PackageActionViewTests(TestCase):
     def setUp(self):
         create_rights_statements()
         create_packages()
-        copy_binaries()
-        if Path(settings.BASE_DESTINATION_DIR).exists():
-            shutil.rmtree(Path(settings.BASE_DESTINATION_DIR))
 
-    @patch('package_review.clients.AWSClient.__init__')
-    @patch('package_review.clients.AWSClient.deliver_message')
-    def test_approve_view(self, mock_deliver, mock_init):
-        mock_init.return_value = None
+    @mock_aws
+    def test_approve_view(self):
+        sns = boto3.client('sns', region_name='us-east-1')
+        topic_arn = sns.create_topic(Name='digitized-av-events')['TopicArn']
+        sqs_conn = boto3.resource("sqs", region_name="us-east-1")
+        sqs_conn.create_queue(QueueName="test-queue")
+        sns.subscribe(
+            TopicArn=topic_arn,
+            Protocol="sqs",
+            Endpoint=f"arn:aws:sqs:us-east-1:{DEFAULT_ACCOUNT_ID}:test-queue")
         pkg_list = ",".join([str(obj.id) for obj in Package.objects.all()])
         rights_list = ",".join([str(obj.id) for obj in RightsStatement.objects.all()])
+
         response = self.client.post(f'{reverse("package-approve")}?object_list={pkg_list}&rights_ids={rights_list}')
-        self.assertEqual(mock_deliver.call_count, Package.objects.all().count())
+
         for package in Package.objects.all():
             self.assertEqual(package.process_status, Package.APPROVED)
             self.assertEqual(package.rights_ids, rights_list)
-        self.assertEqual(len(list(Path(settings.BASE_STORAGE_DIR).iterdir())), 0)
-        self.assertEqual(len(list(Path(settings.BASE_DESTINATION_DIR).iterdir())), Package.objects.all().count())
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, reverse('package-list'))
 
-    @patch('package_review.clients.AWSClient.__init__')
+        queue = sqs_conn.get_queue_by_name(QueueName="test-queue")
+        messages = queue.receive_messages(MaxNumberOfMessages=5)
+        self.assertEqual(len(Package.objects.all()), len(messages))
+
+    @mock_aws
     @patch('package_review.clients.AWSClient.deliver_message')
-    def test_reject_view(self, mock_delete, mock_init):
-        mock_init.return_value = None
+    def test_reject_view(self, mock_delete):
+        s3 = boto3.client('s3', region_name='us-east-1')
+        s3.create_bucket(Bucket=settings.AWS['bucket'])
+        for refid in ['9ba10e5461d401517b0e1a53d514ec87', 'f7d3dd6dc9c4732fa17dbd88fbe652b6']:
+            bag_path = Path("package_review", FIXTURE_DIR, "packages", refid)
+            upload_bag(s3, bag_path)
+
         pkg_list = ",".join([str(obj.id) for obj in Package.objects.all()])
+
         response = self.client.post(f'{reverse("package-reject")}?object_list={pkg_list}')
+
         self.assertEqual(mock_delete.call_count, Package.objects.all().count())
         for package in Package.objects.all():
             self.assertEqual(package.process_status, Package.REJECTED)
-        self.assertTrue(len(list(Path(settings.BASE_STORAGE_DIR).iterdir())) == 0)
+        found = s3.list_objects_v2(
+            Bucket=settings.AWS['bucket'],
+            MaxKeys=1)['KeyCount']
+        assert found == 0
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, reverse('package-list'))
 
@@ -360,16 +434,24 @@ class PackageActionViewTests(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, reverse('package-detail', kwargs={'pk': package.pk}))
 
+    @mock_aws
     def test_update_tree(self):
-        package = random.choice(Package.objects.all())
+        refid = '9ba10e5461d401517b0e1a53d514ec87'
+        s3 = boto3.client('s3', region_name='us-east-1')
+        s3.create_bucket(Bucket=settings.AWS['bucket'])
+        bag_path = Path("package_review", FIXTURE_DIR, "packages", refid)
+        upload_bag(s3, bag_path)
+
+        package = Package.objects.get(refid=refid)
         response = self.client.get(f'{reverse("update-tree")}?object_list={package.id}')
         package.refresh_from_db()
-        self.assertIn(package.refid, package.tree)
-        self.assertEqual(response.url, reverse('package-detail', kwargs={'pk': package.pk}))
+        print(package.tree)
+        self.assertEqual(
+            package.tree,
+            "9ba10e5461d401517b0e1a53d514ec87/9ba10e5461d401517b0e1a53d514ec87.mp4"
+        )
 
-    def tearDown(self):
-        if Path(settings.BASE_DESTINATION_DIR).exists():
-            shutil.rmtree(Path(settings.BASE_DESTINATION_DIR))
+        self.assertEqual(response.url, reverse('package-detail', kwargs={'pk': package.pk}))
 
 
 class HealthCheckEndpointTests(TestCase):
