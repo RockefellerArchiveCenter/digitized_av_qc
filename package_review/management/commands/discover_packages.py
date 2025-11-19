@@ -65,7 +65,7 @@ class Command(BaseCommand):
             size = s3_client.calculate_package_size(refid)
             package_type = self._get_type(refid, settings.AWS['bucket'], s3_client)
             possible_duplicate = Package.objects.filter(refid=refid, process_status=Package.APPROVED).exists()
-            access_suffix, master_suffix = ('*.mp3', '*.wav') if package_type == Package.AUDIO else ('*.mp4', '*.mkv')
+            access_suffix, master_suffix = ('.mp3', '.wav') if package_type == Package.AUDIO else ('.mp4', '.mkv')
             access_file_urls = s3_client.get_signed_urls(refid, settings.AWS['bucket'], access_suffix)
             master_file_urls = s3_client.get_signed_urls(refid, settings.AWS['bucket'], master_suffix)
             Package.objects.create(

@@ -3,6 +3,7 @@ from os import getenv
 from django.conf import settings
 from django.shortcuts import redirect
 from django.views.generic import DetailView, ListView, TemplateView, View
+from storages.backends.s3boto3 import S3Boto3Storage
 
 from .clients import ArchivesSpaceClient, AWSClient
 from .helpers import get_config
@@ -30,6 +31,14 @@ class PackageDetailView(RightsStatementMixin, DetailView):
     """Detail view for individual packages."""
     template_name = 'detail.html'
     model = Package
+
+    def get_context_data(self, **kwargs):
+        """Adds PDF URL to context."""
+        context = super().get_context_data(**kwargs)
+        s3_storage = S3Boto3Storage()
+        suffix = '.mp3' if self.object.type == Package.AUDIO else '.mp4'
+        context['asset_url'] = s3_storage.url(f'{self.object.refid}/{self.object.refid}{suffix}')
+        return context
 
 
 class BulkActionListView(View):
