@@ -18,18 +18,20 @@ logging.basicConfig(
 class Command(BaseCommand):
     help = "Discovers new packages to be QCed."
 
-    def _get_type(self, root_path):
-        refid = root_path.stem
-        if (root_path / f'{refid}.mp3').exists():
+    def add_arguments(self, parser):
+        parser.add_argument("refid")
+
+    def _get_type(self, refid, bucket_name, s3_client):
+        if s3_client.key_exists(bucket_name, f"{refid}/{refid}.mp3"):
             return Package.AUDIO
-        elif (root_path / f'{refid}.mp4').exists():
+        elif s3_client.key_exists(bucket_name, f"{refid}/{refid}.mp4"):
             return Package.VIDEO
         else:
             raise Exception(f'Unable to determine type of package {refid}')
 
-    def _get_duration(self, filepaths):
+    def _get_duration(self, file_urls):
         duration = 0.0
-        for fp in filepaths:
+        for fp in file_urls:
             process = subprocess.Popen(
                 ['ffprobe',
                  '-v',
@@ -41,58 +43,57 @@ class Command(BaseCommand):
                  fp],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE)
-            out, _ = process.communicate()
+            out, e = process.communicate()
             duration += float(out.decode())
         return duration
 
     def _has_multiple_masters(self, master_files):
-        return bool(len(list(master_files)) > 1)
+        return bool(len(master_files) > 1)
 
     def handle(self, *args, **options):
-        if not settings.BASE_STORAGE_DIR.is_dir():
-            self.stdout.write(self.style.ERROR(f'Root directory {str(settings.BASE_STORAGE_DIR)} for files waiting to be QCed does not exist.'))
-            exit()
-        created_list = []
         configuration = get_config(f"/{getenv('ENV')}/{getenv('APP_CONFIG_PATH')}")
-
         client = ArchivesSpaceClient(
             baseurl=configuration.get('AS_BASEURL'),
             username=configuration.get('AS_USERNAME'),
             password=configuration.get('AS_PASSWORD'),
             repository=configuration.get('AS_REPO'))
-        for package_path in settings.BASE_STORAGE_DIR.iterdir():
-            refid = package_path.stem
-            if not Package.objects.filter(refid=refid, process_status=Package.PENDING).exists():
-                try:
-                    title, av_number, uri, resource_title, resource_uri, undated_object = client.get_package_data(refid)
-                    package_type = self._get_type(package_path)
-                    possible_duplicate = Package.objects.filter(refid=refid, process_status=Package.APPROVED).exists()
-                    access_suffix, master_suffix = ('*.mp3', '*.wav') if package_type == Package.AUDIO else ('*.mp4', '*.mkv')
-                    Package.objects.create(
-                        title=title,
-                        av_number=av_number,
-                        uri=uri,
-                        resource_title=resource_title,
-                        resource_uri=resource_uri,
-                        duration_access=self._get_duration(package_path.glob(access_suffix)),
-                        duration_master=self._get_duration(package_path.glob(master_suffix)),
-                        multiple_masters=self._has_multiple_masters(package_path.glob(master_suffix)),
-                        possible_duplicate=possible_duplicate,
-                        refid=refid,
-                        type=package_type,
-                        undated_object=undated_object,
-                        process_status=Package.PENDING)
-                    created_list.append(refid)
-                except Exception as e:
-                    logging.exception(e)
-                    exception = "\n".join(traceback.format_exception(e))
-                    sns_client = AWSClient('sns', settings.AWS['role_arn'])
-                    sns_client.deliver_message(
-                        settings.AWS['sns_topic'],
-                        None,
-                        f'Error discovering refid {refid}\n\n{exception}',
-                        'FAILURE')
-                    continue
+        s3_client = AWSClient('s3', settings.AWS['role_arn'])
 
-        message = f'Packages created: {", ".join(created_list)}' if len(created_list) else 'No new packages to discover.'
-        self.stdout.write(self.style.SUCCESS(message))
+        refid = options['refid']
+        try:
+            title, av_number, uri, resource_title, resource_uri, undated_object = client.get_package_data(refid)
+            size = s3_client.calculate_package_size(refid)
+            package_type = self._get_type(refid, settings.AWS['bucket'], s3_client)
+            possible_duplicate = Package.objects.filter(refid=refid, process_status=Package.APPROVED).exists()
+            access_suffix, master_suffix = ('.mp3', '.wav') if package_type == Package.AUDIO else ('.mp4', '.mkv')
+            access_file_urls = s3_client.get_signed_urls(refid, settings.AWS['bucket'], access_suffix)
+            master_file_urls = s3_client.get_signed_urls(refid, settings.AWS['bucket'], master_suffix)
+            Package.objects.create(
+                title=title,
+                av_number=av_number,
+                uri=uri,
+                resource_title=resource_title,
+                resource_uri=resource_uri,
+                duration_access=self._get_duration(access_file_urls),
+                duration_master=self._get_duration(master_file_urls),
+                multiple_masters=self._has_multiple_masters(master_file_urls),
+                possible_duplicate=possible_duplicate,
+                refid=refid,
+                size_bytes=size,
+                type=package_type,
+                undated_object=undated_object,
+                process_status=Package.PENDING)
+            message = f'Package created: {refid}'
+            self.stdout.write(self.style.SUCCESS(message))
+        except Exception as e:
+            logging.exception(e)
+            exception = "\n".join(traceback.format_exception(e))
+            sns_client = AWSClient('sns', settings.AWS['role_arn'])
+            sns_client.deliver_message(
+                settings.AWS['sns_topic'],
+                None,
+                f'Error discovering refid {refid}',
+                'FAILURE',
+                traceback=exception)
+            message = f'Error creating packages: {e}'
+            self.stdout.write(self.style.ERROR(message))

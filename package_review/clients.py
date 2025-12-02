@@ -1,6 +1,10 @@
+from os import getenv
+
 import boto3
 from asnake.aspace import ASpace
 from aws_assume_role_lib import assume_role
+from botocore.exceptions import ClientError
+from django.conf import settings
 from requests import Session
 
 
@@ -91,10 +95,45 @@ class AWSClient(object):
     def get_client_with_role(self, resource, role_arn):
         """Gets Boto3 client which authenticates with a specific IAM role."""
         session = boto3.Session()
-        assumed_role_session = assume_role(session, role_arn)
+        assumed_role_session = assume_role(session, role_arn, region_name=getenv('AWS_REGION', 'us-east-1'))
         return assumed_role_session.client(resource)
 
-    def deliver_message(self, sns_topic, package, message, outcome, rights_ids=None):
+    def calculate_package_size(self, package_id):
+        """Calculates total size of a package."""
+        package_size = 0
+        paginator = self.client.get_paginator('list_objects_v2')
+        pages = paginator.paginate(Bucket=settings.AWS['bucket'], Prefix=package_id)
+
+        for page in pages:
+            for obj in page.get('Contents', []):
+                package_size += obj['Size']
+
+        return package_size
+
+    def key_exists(self, bucket_name, key):
+        """Checks if a given key exists in a bucket."""
+        try:
+            self.client.head_object(Bucket=bucket_name, Key=key)
+            return True
+        except ClientError as e:
+            if e.response['Error']['Code'] == '404':
+                return False
+            else:
+                raise
+
+    def get_signed_urls(self, refid, bucket_name, suffix, timeout=60):
+        """Returns signed URLs for files matching a refid and a suffix."""
+        suffix_urls = []
+        package_files = self.client.list_objects_v2(Bucket=bucket_name, Prefix=refid)['Contents']
+        for p in package_files:
+            if p['Key'].endswith(suffix):
+                signed_url = self.client.generate_presigned_url('get_object',
+                                                                Params={'Bucket': bucket_name, 'Key': p['Key']},
+                                                                ExpiresIn=timeout)
+                suffix_urls.append(signed_url)
+        return suffix_urls
+
+    def deliver_message(self, sns_topic, package, message, outcome, traceback=None, rights_ids=None, size=None):
         """Delivers message to SNS Topic."""
         attributes = {
             'service': {
@@ -119,6 +158,16 @@ class AWSClient(object):
             attributes['rights_ids'] = {
                 'DataType': 'String',
                 'StringValue': rights_ids,
+            }
+        if traceback:
+            attributes['traceback'] = {
+                'DataType': 'String',
+                'StringValue': traceback,
+            }
+        if size:
+            attributes['size'] = {
+                'DataType': 'String',
+                'StringValue': str(size),
             }
         self.client.publish(
             TopicArn=sns_topic,

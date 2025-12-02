@@ -12,6 +12,7 @@ boto3==1.41.5
     # via
     #   -r requirements.in
     #   aws-assume-role-lib
+    #   django-storages
     #   moto
 botocore==1.41.5
     # via
@@ -26,9 +27,11 @@ charset-normalizer==3.4.4
     # via requests
 cryptography==46.0.3
     # via moto
-directory-tree==0.0.4
-    # via -r requirements.in
 django==5.2.8
+    # via
+    #   -r requirements.in
+    #   django-storages
+django-storages[s3]==1.14.6
     # via -r requirements.in
 idna==3.11
     # via requests
@@ -44,7 +47,7 @@ markupsafe==3.0.3
     #   werkzeug
 more-itertools==10.8.0
     # via archivessnake
-moto==4.2.14
+moto==5.1.17
     # via -r requirements.in
 psycopg2==2.9.11
     # via -r requirements.in

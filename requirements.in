@@ -1,7 +1,7 @@
 aws-assume-role-lib~=2.10
 ArchivesSnake~=0.9
-boto3~=1.28
-directory_tree~=0.0
+boto3~=1.40
 Django~=5.0
-moto~=4.1
+django-storages[s3]~=1.14
+moto~=5.1
 psycopg2~=2.9
