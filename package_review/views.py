@@ -1,11 +1,9 @@
 from os import getenv
-from pathlib import Path
-from shutil import rmtree
 
-from directory_tree import display_tree
 from django.conf import settings
 from django.shortcuts import redirect
 from django.views.generic import DetailView, ListView, TemplateView, View
+from storages.backends.s3boto3 import S3Boto3Storage
 
 from .clients import ArchivesSpaceClient, AWSClient
 from .helpers import get_config
@@ -33,6 +31,14 @@ class PackageDetailView(RightsStatementMixin, DetailView):
     """Detail view for individual packages."""
     template_name = 'detail.html'
     model = Package
+
+    def get_context_data(self, **kwargs):
+        """Adds PDF URL to context."""
+        context = super().get_context_data(**kwargs)
+        s3_storage = S3Boto3Storage()
+        suffix = '.mp3' if self.object.type == Package.AUDIO else '.mp4'
+        context['asset_url'] = s3_storage.url(f'{self.object.refid}/{self.object.refid}{suffix}')
+        return context
 
 
 class BulkActionListView(View):
@@ -75,26 +81,17 @@ class PackageApproveView(PackageActionView):
         rights_ids = request.GET['rights_ids']
         aws_client = AWSClient('sns', settings.AWS['role_arn'])
         for package in queryset:
-            self.move_files(package)
+            package.process_status = Package.APPROVED
+            package.rights_ids = rights_ids
+            package.save()
             aws_client.deliver_message(
                 settings.AWS['sns_topic'],
                 package,
                 self.message,
                 self.outcome,
-                rights_ids)
-            package.process_status = Package.APPROVED
-            package.rights_ids = rights_ids
-            package.save()
+                rights_ids=rights_ids,
+                size=package.size_bytes)
         return redirect('package-list')
-
-    def move_files(self, package):
-        """Moves files to packaging directory."""
-        bag_path = Path(settings.BASE_STORAGE_DIR, package.refid)
-        for fp in bag_path.iterdir():
-            new_path = Path(settings.BASE_DESTINATION_DIR, package.refid, fp.name)
-            new_path.parent.mkdir(parents=True, exist_ok=True)
-            fp.rename(new_path)
-        rmtree(bag_path)
 
 
 class PackageRejectView(PackageActionView):
@@ -117,10 +114,26 @@ class PackageRejectView(PackageActionView):
         return redirect('package-list')
 
     def delete_files(self, package):
-        """Removes files from storage directory."""
-        bag_dir = Path(settings.BASE_STORAGE_DIR, package.refid)
-        if bag_dir.exists():
-            rmtree(bag_dir)
+        """Removes files from storage bucket."""
+        s3_client = AWSClient('s3', settings.AWS['role_arn'])
+        paginator = s3_client.client.get_paginator('list_objects_v2')
+        pages = paginator.paginate(Bucket=settings.AWS['bucket'], Prefix=package.refid)
+
+        objects_to_delete = []
+        for page in pages:
+            if 'Contents' in page:
+                for obj in page['Contents']:
+                    objects_to_delete.append({'Key': obj['Key']})
+
+        if objects_to_delete:
+            for i in range(0, len(objects_to_delete), 1000):
+                batch = objects_to_delete[i:i + 1000]
+                response = s3_client.client.delete_objects(
+                    Bucket=settings.AWS['bucket'],
+                    Delete={'Objects': batch, 'Quiet': True})
+                if 'Errors' in response:
+                    errors = "\n".join([e["Key"] for e in response["errors"]])
+                    raise Exception(f'Error deleting objects: {errors}')
 
 
 class PackageDataRefreshView(PackageActionView):
@@ -151,7 +164,15 @@ class PackageTreeUpdateView(PackageActionView):
 
     def get(self, request, *args, **kwargs):
         queryset = self._get_queryset(request)
+        s3_client = AWSClient('s3', settings.AWS['role_arn'])
+        paginator = s3_client.client.get_paginator('list_objects_v2')
         for package in queryset:
-            package.tree = display_tree(settings.BASE_STORAGE_DIR / package.refid, string_rep=True, show_hidden=True)
+            objects = []
+            pages = paginator.paginate(Bucket=settings.AWS['bucket'], Prefix=package.refid)
+            for page in pages:
+                if 'Contents' in page:
+                    for obj in page['Contents']:
+                        objects.append(obj['Key'])
+                package.tree = "\n".join([obj for obj in sorted(objects)])
             package.save()
         return redirect('package-detail', pk=package.pk)

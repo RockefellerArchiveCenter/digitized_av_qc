@@ -2,18 +2,17 @@ from django.conf import settings
 from django.core.management.base import BaseCommand
 
 from package_review.clients import AWSClient
+from package_review.models import Package
 
 
 class Command(BaseCommand):
     help = "Sends a messaage if QC is complete"
 
     def handle(self, *args, **options):
-        if not settings.BASE_STORAGE_DIR.is_dir():
-            self.stdout.write(self.style.ERROR(f'Root directory {str(settings.BASE_STORAGE_DIR)} for files waiting to be QCed does not exist.'))
-            exit()
-        sns_client = AWSClient('sns', settings.AWS['role_arn'])
+        to_qc = Package.objects.filter(process_status=Package.PENDING).count()
 
-        if not any(settings.BASE_STORAGE_DIR.iterdir()):
+        if not to_qc:
+            sns_client = AWSClient('sns', settings.AWS['role_arn'])
             sns_client.deliver_message(
                 settings.AWS['sns_topic'],
                 None,
