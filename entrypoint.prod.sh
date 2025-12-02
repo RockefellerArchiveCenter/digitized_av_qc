@@ -6,8 +6,6 @@ set -e
 python ./manage.py migrate
 # collect static assets
 python ./manage.py collectstatic --no-input
-# discover packages
-python ./manage.py discover_packages
 # fetch rights statements
 python ./manage.py fetch_rights_statements
 
