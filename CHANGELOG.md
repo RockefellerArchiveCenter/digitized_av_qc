@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.0.1](https://github.com/RockefellerArchiveCenter/digitized_av_qc/compare/v1.0.0...v1.0.1) (2026-07-06)
+
+
+### Bug Fixes
+
+* **deps:** Scheduled dependency updates ([949c56e](https://github.com/RockefellerArchiveCenter/digitized_av_qc/commit/949c56e2d7c27a52cc9eba0adc26fe88136f5267))
+* **deps:** Scheduled dependency updates ([2a37073](https://github.com/RockefellerArchiveCenter/digitized_av_qc/commit/2a370731165f9798a4a18d66e86cd46bde274e82))
+* **deps:** Scheduled dependeny updates ([b930f58](https://github.com/RockefellerArchiveCenter/digitized_av_qc/commit/b930f580d77dd84d1c49440298ffe254d5c7c73c))
+* **deps:** Scheduled dependeny updates ([b930f58](https://github.com/RockefellerArchiveCenter/digitized_av_qc/commit/b930f580d77dd84d1c49440298ffe254d5c7c73c))
+
 ## 1.0.0 (2026-06-18)
 
 
