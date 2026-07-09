@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.0.2](https://github.com/RockefellerArchiveCenter/digitized_av_qc/compare/v1.0.1...v1.0.2) (2026-07-09)
+
+
+### Bug Fixes
+
+* update dockerfile ([ed21dbd](https://github.com/RockefellerArchiveCenter/digitized_av_qc/commit/ed21dbdf2bb5dc28a7431a611288c89f42a2634c))
+* update dockerfile to pin alpine version ([1304d6a](https://github.com/RockefellerArchiveCenter/digitized_av_qc/commit/1304d6a88c55b31fd5eb1006b4b17f58dcb73637))
+* updates dockerfile ([1304d6a](https://github.com/RockefellerArchiveCenter/digitized_av_qc/commit/1304d6a88c55b31fd5eb1006b4b17f58dcb73637))
+
 ## [1.0.1](https://github.com/RockefellerArchiveCenter/digitized_av_qc/compare/v1.0.0...v1.0.1) (2026-07-06)
 
 
