@@ -1,11 +1,11 @@
-FROM python:3.12-alpine AS base
+FROM python:3.12-alpine3.20 AS base
 
 ENV APPLICATION_NAME=digitized-av-qc
 ENV APPLICATION_DIR=digitized_av_qc
 ENV APPLICATION_PORT=80
 
 # Install base system requirements
-RUN apk add --no-cache postgresql-dev build-base python3-dev
+RUN apk add --no-cache postgresql-dev build-base
 
 WORKDIR /var/www/${APPLICATION_NAME}
 
