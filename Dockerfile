@@ -5,7 +5,7 @@ ENV APPLICATION_DIR=digitized_av_qc
 ENV APPLICATION_PORT=80
 
 # Install base system requirements
-RUN apk add --no-cache postgresql-dev build-base
+RUN apk add --no-cache ffmpeg postgresql-dev build-base
 
 WORKDIR /var/www/${APPLICATION_NAME}
 
