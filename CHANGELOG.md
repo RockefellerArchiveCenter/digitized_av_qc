@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.3](https://github.com/RockefellerArchiveCenter/digitized_av_qc/compare/v1.0.2...v1.0.3) (2026-07-31)
+
+
+### Bug Fixes
+
+* Reimplement ffmpeg ([37cd78d](https://github.com/RockefellerArchiveCenter/digitized_av_qc/commit/37cd78dbd1436bc498113d8b191f58895e6105bb))
+
 ## [1.0.2](https://github.com/RockefellerArchiveCenter/digitized_av_qc/compare/v1.0.1...v1.0.2) (2026-07-09)
 
 
