@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.6](https://github.com/RockefellerArchiveCenter/digitized_av_qc/compare/v1.0.5...v1.0.6) (2026-09-28)
+
+
+### Bug Fixes
+
+* update postgres version ([bdac44b](https://github.com/RockefellerArchiveCenter/digitized_av_qc/commit/bdac44b08f00b6bc61b3b778e064ac242a094657))
+
 ## [1.0.5](https://github.com/RockefellerArchiveCenter/digitized_av_qc/compare/v1.0.4...v1.0.5) (2026-09-08)
 
 
