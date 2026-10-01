@@ -6,15 +6,15 @@ attrs==26.1.0
     # via archivessnake
 aws-assume-role-lib==2.10.0
     # via -r requirements.in
-boltons==26.1.0
+boltons==26.2.0
     # via archivessnake
-boto3==1.43.85
+boto3==1.43.106
     # via
     #   -r requirements.in
     #   aws-assume-role-lib
     #   django-storages
     #   moto
-botocore==1.43.85
+botocore==1.43.106
     # via
     #   boto3
     #   moto
@@ -23,9 +23,9 @@ certifi==2026.7.22
     # via requests
 cffi==2.1.1
     # via cryptography
-charset-normalizer==3.5.1
+charset-normalizer==3.5.2
     # via requests
-cryptography==50.0.1
+cryptography==50.0.2
     # via moto
 django==5.2.17
     # via
@@ -33,7 +33,7 @@ django==5.2.17
     #   django-storages
 django-storages[s3]==1.14.6
     # via -r requirements.in
-idna==3.19
+idna==3.20
     # via requests
 jmespath==1.1.0
     # via
@@ -45,7 +45,7 @@ more-itertools==11.1.0
     # via archivessnake
 moto==5.2.3
     # via -r requirements.in
-psycopg2==2.9.12
+psycopg2==2.9.13
     # via -r requirements.in
 pycparser==3.0
     # via cffi
@@ -72,12 +72,12 @@ sqlparse==0.6.0
     # via django
 structlog==26.1.0
     # via archivessnake
-urllib3==2.7.0
+urllib3==2.8.0
     # via
     #   botocore
     #   requests
     #   responses
-werkzeug==3.1.8
+werkzeug==3.1.9
     # via moto
 xmltodict==1.0.4
     # via moto
