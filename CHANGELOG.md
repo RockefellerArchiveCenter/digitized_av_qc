@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.0.8](https://github.com/RockefellerArchiveCenter/digitized_av_qc/compare/v1.0.7...v1.0.8) (2026-10-21)
+
+
+### Bug Fixes
+
+* update pip ([0fd05af](https://github.com/RockefellerArchiveCenter/digitized_av_qc/commit/0fd05afccfe6574d29c945b4c5f6a1a9d10e9202))
+* update pip ([0fd05af](https://github.com/RockefellerArchiveCenter/digitized_av_qc/commit/0fd05afccfe6574d29c945b4c5f6a1a9d10e9202))
+* update pip ([c73d83b](https://github.com/RockefellerArchiveCenter/digitized_av_qc/commit/c73d83b58ae7d1b90aa2232b91dab2f172154499))
+* update pip ([c73d83b](https://github.com/RockefellerArchiveCenter/digitized_av_qc/commit/c73d83b58ae7d1b90aa2232b91dab2f172154499))
+* update pip ([eebadfe](https://github.com/RockefellerArchiveCenter/digitized_av_qc/commit/eebadfee80adf405e40daad11a1ec9ed4ecc77e8))
+
 ## [1.0.7](https://github.com/RockefellerArchiveCenter/digitized_av_qc/compare/v1.0.6...v1.0.7) (2026-10-05)
 
 
