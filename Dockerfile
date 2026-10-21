@@ -11,7 +11,8 @@ WORKDIR /var/www/${APPLICATION_NAME}
 
 # Install Python requirements
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+RUN python -m pip install --upgrade "pip>=26.2.2" && \
+    python -m pip install -r requirements.txt
 
 # Bring in the rest of the application
 COPY ${APPLICATION_DIR} ${APPLICATION_DIR}
