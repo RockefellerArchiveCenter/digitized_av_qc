@@ -1,6 +1,6 @@
 archivessnake==0.10.1
     # via -r requirements.in
-asgiref==3.12.1
+asgiref==3.13.0
     # via django
 attrs==26.1.0
     # via archivessnake
@@ -8,18 +8,18 @@ aws-assume-role-lib==2.10.0
     # via -r requirements.in
 boltons==26.2.0
     # via archivessnake
-boto3==1.43.117
+boto3==1.43.123
     # via
     #   -r requirements.in
     #   aws-assume-role-lib
     #   django-storages
     #   moto
-botocore==1.43.117
+botocore==1.43.123
     # via
     #   boto3
     #   moto
     #   s3transfer
-certifi==2026.10.19
+certifi==2026.10.23
     # via requests
 cffi==2.1.1
     # via cryptography
@@ -43,11 +43,11 @@ markupsafe==3.0.4
     # via werkzeug
 more-itertools==11.2.1
     # via archivessnake
-moto==5.2.4
+moto==5.2.5
     # via -r requirements.in
 psycopg2==2.9.13
     # via -r requirements.in
-pycparser==3.11
+pycparser==3.12
     # via cffi
 python-dateutil==2.9.0.post0
     # via botocore
