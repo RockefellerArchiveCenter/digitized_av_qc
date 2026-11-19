@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.0.10](https://github.com/RockefellerArchiveCenter/digitized_av_qc/compare/v1.0.9...v1.0.10) (2026-11-19)
+
+
+### Bug Fixes
+
+* update deploy workflow ([290c49c](https://github.com/RockefellerArchiveCenter/digitized_av_qc/commit/290c49ce5be9938261e769e94d3f7f8f88e1faa2))
+* update deploy workflow ([bdc2917](https://github.com/RockefellerArchiveCenter/digitized_av_qc/commit/bdc2917735de187351a9079cc91bcdd18dd9e2ef))
+* update deploy workflow ([5e2ef78](https://github.com/RockefellerArchiveCenter/digitized_av_qc/commit/5e2ef78de8f04b9ff64a02919212b241b7a5cda0))
+
 ## [1.0.9](https://github.com/RockefellerArchiveCenter/digitized_av_qc/compare/v1.0.8...v1.0.9) (2026-11-02)
 
 
